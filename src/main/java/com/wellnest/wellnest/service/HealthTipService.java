@@ -29,7 +29,19 @@ public class HealthTipService {
             "Fill half your plate with colorful vegetables.",
             "Take deep breaths to reduce stress levels instantly.",
             "Avoid processed sugars to keep energy levels stable.",
-            "Stretch for 5 minutes daily to improve flexibility."
+            "Stretch for 5 minutes daily to improve flexibility.",
+            "Replace sugary drinks with herbal tea or water with lemon.",
+            "Try to eat without distractions like TV or your phone.",
+            "Use the stairs instead of the elevator whenever possible.",
+            "Eat a piece of fruit when you crave something sweet.",
+            "Consistency is key: 10 minutes of exercise is better than 0.",
+            "Wash your hands frequently to avoid getting sick.",
+            "Stand up and move around every hour if you have a desk job.",
+            "Practice gratitude daily to boost your mental well-being.",
+            "Sunlight is a natural source of Vitamin D; try to get 15 mins daily.",
+            "Prepare your meals ahead of time to avoid unhealthy fast food choices.",
+            "Listen to your body: rest when you feel tired or sore.",
+            "Social connections are vital for health; call a friend today."
     };
 
     public HealthTip getTipForToday() {
@@ -41,9 +53,6 @@ public class HealthTipService {
             // Check if it's a fallback tip
             if (isFallbackTip(tip.getText())) {
                 System.out.println("⚠️ CACHED TIP IS FALLBACK. Retrying API fetch...");
-                // Ideally we should update the existing one or delete it.
-                // For simplicity, let's try to fetch new data.
-                // If API succeeds, we update this tip. If fails, we keep it.
                 String newContent = fetchContentFromApi();
                 if (newContent != null) {
                     tip.setText(newContent);
@@ -61,6 +70,15 @@ public class HealthTipService {
 
         // Fetch new tip
         return fetchAndSaveTip(today);
+    }
+
+    public HealthTip getRandomTip() {
+        // This method bypasses the daily cache and provides a fresh one
+        String tipText = fetchContentFromApi();
+        if (tipText == null) {
+            tipText = getRandomFallback();
+        }
+        return new HealthTip(tipText, "Instant Health Spark", null);
     }
 
     private boolean isFallbackTip(String content) {

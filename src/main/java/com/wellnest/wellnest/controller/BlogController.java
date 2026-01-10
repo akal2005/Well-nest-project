@@ -16,7 +16,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/blog")
-@CrossOrigin(origins = "*")
 public class BlogController {
 
     @Autowired

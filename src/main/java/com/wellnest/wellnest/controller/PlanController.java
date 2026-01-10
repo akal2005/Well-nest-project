@@ -16,7 +16,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/plans")
-@CrossOrigin(origins = "*")
 public class PlanController {
 
     @Autowired

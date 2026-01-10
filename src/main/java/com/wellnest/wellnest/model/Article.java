@@ -24,6 +24,8 @@ public class Article {
 
     private String trainerEmail;
 
+    private boolean featured = false;
+
     private LocalDateTime createdAt;
 
     private int likesCount = 0;
@@ -100,6 +102,14 @@ public class Article {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public boolean isFeatured() {
+        return featured;
+    }
+
+    public void setFeatured(boolean featured) {
+        this.featured = featured;
     }
 
     public int getLikesCount() {

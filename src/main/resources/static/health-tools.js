@@ -57,16 +57,42 @@ function classifyBMI(bmi) {
 function getGuidance(category) {
     switch (category) {
         case "underweight":
-            return "You are in the Underweight range. It's important to eat nutrient-rich foods and consult a nutritionist to reach a healthy weight safely.";
+            return "You are in the Underweight range. It's time to fuel your flame with more nutrients!";
         case "normal":
-            return "Great job! You are in the Healthy Weight range. Maintain your balanced diet and regular exercise to stay fit and healthy.";
+            return "Great job! Your health fire is burning perfectly. Keep it up!";
         case "overweight":
-            return "You are in the Overweight range. Small changes like increasing physical activity and portion control can help you move towards a healthier weight.";
+            return "You are in the Overweight range. A few small sparks of activity can ignite your journey!";
         case "obese":
-            return "You are in the Obese range. We recommend consulting a healthcare provider for a personalized plan to improve your long-term health.";
+            return "You are in the Obese range. Let's work together to manage the heat and improve your health.";
         default:
             return "";
     }
+}
+
+function getSmartRecommendations(category) {
+    const plans = {
+        underweight: [
+            "🔥 **Ignite:** Focus on complex carbs like oats and sweet potatoes.",
+            "💪 **Forge:** Start light strength training to build muscle.",
+            "🥗 **Fuel:** Eat 5 small, nutrient-dense meals a day."
+        ],
+        normal: [
+            "⚡ **Maintain:** Keep your current workout streak alive!",
+            "🌱 **Vitalize:** Experiment with new healthy recipes or superfoods.",
+            "🧘 **Balance:** Add 10 mins of daily mindfulness to your routine."
+        ],
+        overweight: [
+            "🔥 **Burn:** Aim for 30 mins of brisk walking or swimming daily.",
+            "💧 **Flush:** Swap sugary drinks for 2.5L of water daily.",
+            "🥗 **Track:** Use our Meal Tracker to watch your portion sizes."
+        ],
+        obese: [
+            "🚶 **Power Walk:** Start with a 15-min walk twice a day.",
+            "🍎 **Cleanse:** Focus on whole foods and high-fiber veggies.",
+            "👨‍⚕️ **Consult:** Chat with a WellNest Trainer for a safe custom plan."
+        ]
+    };
+    return plans[category] || [];
 }
 
 function updateBMIScale(bmi) {
@@ -127,9 +153,16 @@ async function handleBMISubmit(event) {
 
     bmiCategoryEl.classList.add(categoryKey);
     bmiGuidanceEl.textContent = getGuidance(categoryKey);
+
+    // RENDER SMART PLAN (NEW)
+    renderSmartPlan(categoryKey);
+
     updateBMIScale(rounded);
 
     bmiResultBox.classList.add("show");
+
+    // APPLY FIRE INTENSITY (NEW)
+    applyFireIntensity(categoryKey);
 
     // =========================
     // OPTIONAL: send BMI to backend (only if you create an API)
@@ -220,6 +253,48 @@ document.addEventListener("DOMContentLoaded", () => {
     // attach BMI submit handler
     if (bmiForm) {
         bmiForm.addEventListener("submit", handleBMISubmit);
+    }
+
+    // =========================
+    // FIRE UPGRADE HELPERS
+    // =========================
+    function renderSmartPlan(category) {
+        const container = document.getElementById("featured-insights");
+        const plan = getSmartRecommendations(category);
+
+        if (container) {
+            container.innerHTML = `
+            <div class="full-width-header">
+                <span class="card-icon" style="color: #ff416c;">🔥</span>
+                <span class="fw-title">Your 3-Step Spark Plan</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px;">
+                ${plan.map(step => `
+                    <div class="glass-card" style="padding: 15px; border-radius: 12px; font-size: 14px; border: 1px solid rgba(255, 65, 108, 0.2);">
+                        ${step.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #ff416c;">$1</strong>')}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        }
+    }
+
+    function applyFireIntensity(category) {
+        const root = document.documentElement;
+        const body = document.body;
+
+        // Default sparks
+        let color = "#18b046"; // Green (Normal)
+
+        if (category === "underweight") color = "#3498db"; // Blue
+        if (category === "overweight") color = "#f39c12"; // Orange
+        if (category === "obese") color = "#ff416c"; // Red/Fire
+
+        root.style.setProperty('--neon-theme', color);
+        body.style.background = `radial-gradient(circle at top, ${color}22 0%, #000000 85%)`;
+
+        const calcBtn = document.querySelector(".btn-green");
+        if (calcBtn) calcBtn.style.background = color;
     }
 
     // first tip

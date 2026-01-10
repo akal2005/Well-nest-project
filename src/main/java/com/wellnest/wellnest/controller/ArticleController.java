@@ -19,7 +19,6 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/articles")
-@CrossOrigin(origins = "*")
 public class ArticleController {
 
     @Autowired
@@ -221,5 +220,11 @@ public class ArticleController {
             return java.util.Collections.emptyList();
         }
         return articleRepository.findBySpecializationContainingIgnoreCase(user.getGoal());
+    }
+
+    // 8. Get Featured Articles
+    @GetMapping("/featured")
+    public List<Article> getFeaturedArticles() {
+        return articleRepository.findByFeaturedTrueOrderByCreatedAtDesc();
     }
 }

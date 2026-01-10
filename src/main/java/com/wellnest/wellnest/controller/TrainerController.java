@@ -24,26 +24,34 @@ public class TrainerController {
     @Autowired
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
-    // Seeding some dummy data if empty - DISABLED per user request
+    // Seeding some dummy data if empty
     @PostConstruct
     public void init() {
-        // Remove demo trainers if they exist to clean up
-        String[] demoNames = { "Alex Fit", "Sarah Strong", "Zen Master", "Mike Runner", "Emily Balance", "Coach James",
-                "Elena Swift" };
-        for (String name : demoNames) {
-            Trainer t = trainerRepository.findAll().stream().filter(tr -> tr.getName().equals(name)).findFirst()
-                    .orElse(null);
-            if (t != null) {
-                trainerRepository.delete(t);
-                // Also remove user?
-                userRepository.findByEmail(t.getContactEmail()).ifPresent(u -> userRepository.delete(u));
-            }
+        if (trainerRepository.count() == 0) {
+            createTrainer("Alex Fit", "Strength Training", 5, "Expert in weight lifting and muscle gain.",
+                    "alex@fit.com",
+                    "https://img.freepik.com/premium-photo/gym-instructor-portrait-with-his-arms-crossed_13339-11261.jpg",
+                    "Mumbai", "Morning");
+            createTrainer("Sarah Strong", "Weight Loss", 7, "Certified nutritionist and fat loss coach.",
+                    "sarah@strong.com",
+                    "https://t3.ftcdn.net/jpg/02/76/85/06/360_F_276850654_E31QeXy62L6xNn5hXQyP775Bq5Hn6h9l.jpg",
+                    "Delhi", "Evening");
+            createTrainer("Zen Master", "Yoga", 10, "Specialist in mental wellness and flexibility.", "zen@master.com",
+                    "https://img.freepik.com/premium-photo/portrait-mature-yogi-man-sitting-cross-legged-posing-indoor-yoga-studio_351987-1601.jpg",
+                    "Bangalore", "Flexible");
+            createTrainer("Mike Runner", "HIIT & Cardio", 4, "High energy trainer to boost your stamina.",
+                    "mike@runner.com",
+                    "https://t4.ftcdn.net/jpg/04/14/19/23/360_F_414192301_dC63VvXvP8kE3Q7VvR9VvO1S6vOQ5k5y.jpg",
+                    "Mumbai", "Weekend");
+            createTrainer("Elena Swift", "Zumba & Pilates", 6, "Dance your way to a healthier version of yourself.",
+                    "elena@swift.com",
+                    "https://t3.ftcdn.net/jpg/01/95/96/57/360_F_195965706_0v8VvXvP8kE3Q7VvR9VvO1S6vOQ5k5y.jpg", "Pune",
+                    "Flexible");
         }
-
-        // Ensure all trainers have a corresponding User account
         syncTrainersToUsers();
     }
 
+    // Ensure all trainers have a corresponding User account
     private void syncTrainersToUsers() {
         List<Trainer> trainers = trainerRepository.findAll();
         for (Trainer t : trainers) {
@@ -61,20 +69,16 @@ public class TrainerController {
 
     private void createTrainer(String name, String spec, int exp, String bio, String email, String img, String loc,
             String avail) {
-        // Disabled
-    }
-
-    // Force reset data (to update images)
-    @GetMapping("/reset")
-    public String resetTrainers() {
-        // trainerRepository.deleteAll(); // Disabled to protect real data
-        // init();
-        return "Reset disabled.";
-    }
-
-    @GetMapping
-    public List<Trainer> getAllTrainers() {
-        return trainerRepository.findAll();
+        Trainer t = new Trainer();
+        t.setName(name);
+        t.setSpecialization(spec);
+        t.setExperienceYears(exp);
+        t.setBio(bio);
+        t.setContactEmail(email);
+        t.setImageUrl(img);
+        t.setLocation(loc);
+        t.setAvailability(avail);
+        trainerRepository.save(t);
     }
 
     // Recommend based on user email (and their goal)
@@ -83,7 +87,8 @@ public class TrainerController {
             @RequestParam String userEmail,
             @RequestParam(required = false) String location,
             @RequestParam(required = false) String availability,
-            @RequestParam(required = false) String type) {
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String name) {
 
         User user = userRepository.findByEmail(userEmail).orElse(null);
         if (user == null) {
@@ -97,31 +102,27 @@ public class TrainerController {
         // Check if explicit filters are active
         boolean isFiltering = (location != null && !location.isEmpty() && !location.equals("All")) ||
                 (availability != null && !availability.isEmpty() && !availability.equals("All")) ||
-                (type != null && !type.isEmpty() && !type.equals("All"));
+                (type != null && !type.isEmpty() && !type.equals("All")) ||
+                (name != null && !name.isEmpty());
 
         List<Trainer> matches = allTrainers.stream()
                 .filter(t -> {
                     boolean match = true;
 
-                    // 1. Goal Match (Skip if explicit Type filter is on)
-                    if (type != null && !type.isEmpty() && !type.equals("All")) {
+                    // 0. Name Filter (NEW)
+                    if (name != null && !name.isEmpty()) {
+                        if (t.getName() == null || !t.getName().toLowerCase().contains(name.toLowerCase())) {
+                            match = false;
+                        }
+                    }
+
+                    // 1. Goal Match (Skip if explicit Type filter or Name filter is on)
+                    if (match && type != null && !type.isEmpty() && !type.equals("All")) {
                         if (t.getSpecialization() == null
                                 || !t.getSpecialization().toLowerCase().contains(type.toLowerCase())) {
                             match = false;
                         }
-                    } else if (!isFiltering && goal != null && !goal.isEmpty()) {
-                        // Only use Goal matching if NOT filtering explicitly by type/loc/avail
-                        // (Standard Recommendation Mode)
-                        // OR we can allow mixing? Let's assume if user Filters, we ignore Goal unless
-                        // it helps?
-                        // User request: "filter by type/availability/location it should work properly"
-                        // So if I select Location=Pune, I expect Pune trainers.
-                        // If I DON'T select Type, should it still filter by Goal?
-                        // Usually "Filter" implies "Search". "Recommendation" implies "Suggestions".
-                        // If isFiltering is true, we should arguably IGNORE goal to let user
-                        // wide-search.
-                        // Let's Skip goal matching logic if isFiltering is true.
-
+                    } else if (match && !isFiltering && goal != null && !goal.isEmpty()) {
                         String spec = t.getSpecialization().toLowerCase();
                         String g = goal.toLowerCase();
 

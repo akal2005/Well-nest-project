@@ -699,6 +699,8 @@
                 <a href="health-tools.html">HEALTH TOOLS</a>
                 <a href="blog.html">BLOG</a>
                 <a href="trainers.html">TRAINERS</a>
+                <button id="fireToggle" class="fire-streak"
+                    style="margin-left: 20px; cursor: pointer; border: none; font-size: 11px;">FIRE MODE: OFF</button>
             </nav>
             <!-- Right Side Profile & Hamburger -->
             <div style="display:flex; gap:15px; align-items:center;">
@@ -737,58 +739,73 @@
     <div class="dashboard-container">
 
         <!-- Welcome -->
-        <div class="welcome-section">
-            <h1>Welcome back, <span id="welcomeName">WellNester</span> 👋</h1>
-            <p>Here’s your central hub. Track workouts & meals, update water and sleep logs, and explore BMI & daily
-                help tips — all in one place.</p>
+        <div class="welcome-section"
+            style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+            <div>
+                <h1 style="display: flex; align-items: center; gap: 15px;">
+                    Welcome back, <span id="welcomeName" class="neon-glow">WellNester</span> 👋
+                </h1>
+                <p>Track your vitals, crush your goals, and keep the fire burning.</p>
+            </div>
+            <div class="fire-streak" id="fireStreakContainer">
+                <span>🔥</span>
+                <span id="streakCount">0</span> DAY STREAK
+            </div>
         </div>
 
         <!-- Cards Row -->
         <div class="cards-row">
+            <!-- Health Score Gauge (NEW FIRE FEATURE) -->
+            <div class="card glass-card" style="flex: 1; text-align: center;">
+                <h3 class="fire-glow">WellNest Score</h3>
+                <div class="score-gauge-container">
+                    <svg class="score-svg" viewBox="0 0 100 100">
+                        <defs>
+                            <linearGradient id="fireGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#FF4B2B" />
+                                <stop offset="100%" stop-color="#FF416C" />
+                            </linearGradient>
+                        </defs>
+                        <circle class="score-bg" cx="50" cy="50" r="45" />
+                        <circle id="scoreFill" class="score-fill" cx="50" cy="50" r="45" stroke-dasharray="283"
+                            stroke-dashoffset="283" />
+                    </svg>
+                    <div class="score-text">
+                        <span id="healthScoreNum" class="score-number">0</span>
+                        <span class="score-label">Points</span>
+                    </div>
+                </div>
+                <p class="card-desc" id="scoreMessage">Complete logs to boost your score!</p>
+            </div>
+
             <!-- Overview -->
-            <div class="card">
+            <div class="card glass-card">
                 <h3>Today's Overview</h3>
                 <div class="card-content">
                     <div class="stat-row">
                         <span class="stat-label">Goal:</span>
-                        <span class="stat-value" id="goalText">Lose Weight</span>
+                        <span class="stat-value" id="goalText">Stay Fit</span>
                     </div>
                     <div class="stat-row">
-                        <span class="stat-label">Age:</span>
-                        <span class="stat-value" id="ageText">25</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Weight:</span>
-                        <span class="stat-value" id="weightText">70 kg</span>
-                    </div>
-                    <div class="stat-row" style="border-bottom: none;">
                         <span class="stat-label">Calories Burned:</span>
-                        <span class="stat-value" id="caloriesText">2,150</span>
+                        <span class="stat-value neon-glow" id="caloriesText">0</span>
                     </div>
                 </div>
                 <div class="user-badge" id="roleBadge">USER</div>
-                <p style="margin-top: 15px; font-size: 12px; color: #666;">Tip: make sure your profile details are
-                    updated to get more accurate analytics.</p>
-            </div>
-
-            <!-- Tracker Links -->
-            <div class="card">
-                <h3>Health Tracker</h3>
-                <p class="card-desc">Log workouts, meals, water intake, and sleep — exactly like in your tracker screen.
-                </p>
-                <div class="buttons-row">
-                    <a href="tracker.html" class="action-btn">OPEN HEALTH TRACKER</a>
-                    <a href="tracker.html" class="secondary-btn">View today's logs</a>
+                <div class="buttons-row" style="margin-top: 15px;">
+                    <a href="profile.html" class="secondary-btn" style="width: 100%; text-align: center;">Edit
+                        Profile</a>
                 </div>
             </div>
 
-            <!-- Tools Links -->
-            <div class="card">
-                <h3>Health Tools</h3>
-                <p class="card-desc">Use your BMI calculator & daily health tips.</p>
-                <div class="buttons-row">
-                    <a href="health-tools.html" class="action-btn">OPEN HEALTH TOOLS</a>
-                    <a href="health-tools.html" class="secondary-btn">Jump to BMI Calculator</a>
+            <!-- Tracker Quick Access -->
+            <div class="card glass-card">
+                <h3>Quick Actions</h3>
+                <p class="card-desc">Log your activity or nutrition in seconds.</p>
+                <div class="buttons-row" style="display: flex; flex-direction: column; gap: 10px;">
+                    <a href="tracker.html" class="action-btn" style="margin: 0; text-align: center;">LOG WORKOUT</a>
+                    <a href="tracker.html" class="action-btn"
+                        style="margin: 0; text-align: center; background: #FF416C;">LOG MEAL</a>
                 </div>
             </div>
         </div>
@@ -796,8 +813,8 @@
         <!-- Trainer Section -->
         <h3 style="color:#18b046; font-size:16px; margin-bottom:20px; text-transform:uppercase;">My Coach & Plans</h3>
         <div class="trainer-section-grid" id="trainerSection">
-            <!-- Chat Box -->
-            <div class="trainer-box chat-box">
+            <!-- Trainer Selection -->
+            <div class="trainer-box selection-box glass-card">
                 <div class="box-header">
                     <h3>My Trainer</h3>
                     <span id="trainerStatus" class="status-badge">Not Selected</span>
@@ -809,7 +826,7 @@
             </div>
 
             <!-- Assigned Workout -->
-            <div class="trainer-box workout-box">
+            <div class="trainer-box workout-box glass-card">
                 <div class="box-header">
                     <h3>Assigned Plans</h3>
                     <span class="box-subtitle">Workout</span>
@@ -820,7 +837,7 @@
             </div>
 
             <!-- Assigned Meal -->
-            <div class="trainer-box diet-box">
+            <div class="trainer-box diet-box glass-card">
                 <div class="box-header">
                     <h3>Nutrition & Diet</h3>
                     <span class="box-subtitle">Meal Plan</span>
@@ -832,7 +849,7 @@
         </div>
 
         <!-- Chart 1: Workout Duration -->
-        <div class="chart-container-full">
+        <div class="chart-container-full glass-card">
             <h3>Workout Duration (Last 7 Days)</h3>
             <div class="chart-wrapper">
                 <canvas id="workoutChart"></canvas>
@@ -840,7 +857,7 @@
         </div>
 
         <!-- Chart 2: Calories Trend -->
-        <div class="chart-container-full">
+        <div class="chart-container-full glass-card">
             <h3>Calories Burned Trend</h3>
             <div class="chart-wrapper">
                 <canvas id="caloriesChart"></canvas>
@@ -898,30 +915,67 @@
             </div>
         </div>
 
+        <!-- Expert Daily Reads (Featured Articles) -->
+        <div class="glass-card" style="margin-bottom: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="color: var(--fire-pink); text-transform: uppercase; font-size: 16px;">✨ Expert Daily Reads
+                </h3>
+                <a href="blog.html?type=FEATURED" style="color: #aaa; font-size: 12px; text-decoration: none;">View
+                    Curated Library</a>
+            </div>
+            <div id="expertArticlesContent" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px;">
+                <p style="color: #666; font-size: 13px;">Curating experts for you...</p>
+            </div>
+        </div>
+
+        <!-- Social Fire Feed (NEW) -->
+        <div class="glass-card" style="margin-bottom: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="color: #ff416c; text-transform: uppercase; font-size: 16px;">🔥 Social Fire Feed</h3>
+                <a href="blog.html" style="color: #aaa; font-size: 12px; text-decoration: none;">View All Posts</a>
+            </div>
+            <div id="socialFeedContent" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 10px;">
+                <!-- Blog cards will be injected here -->
+                <p style="color: #666; font-size: 13px;">Fetching latest community fire...</p>
+            </div>
+        </div>
+
         <!-- Chat Modal -->
         <div id="chatModal" class="modal"
             style="display:none; position:fixed; z-index:200; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.8); justify-content:center; align-items:center;">
-            <div class="modal-content"
-                style="background-color:#1a1a1a; padding:30px; border-radius:12px; border:1px solid #18b046; width:90%; max-width:400px; height:500px; display:flex; flex-direction:column; box-shadow:0 0 20px rgba(24,176,70,0.2);">
-                <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                    <h3 style="color:#18b046;">Chat with <span id="chatTrainerName">Coach</span></h3>
-                    <span style="cursor:pointer; color:#aaa;"
+            <div class="modal-content glass-modal"
+                style="padding:30px; border-radius:24px; width:90%; max-width:450px; height:600px; display:flex; flex-direction:column;">
+                <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom:20px;">
+                    <div>
+                        <h3 style="color:#fff; margin:0;">Chat with <span id="chatTrainerName"
+                                style="color: var(--fire-pink);">Coach</span></h3>
+                        <p style="font-size: 11px; color: #aaa; margin: 4px 0 0 0;">Personal Guidance Session</p>
+                    </div>
+                    <span style="cursor:pointer; color:#aaa; font-size: 20px;"
                         onclick="document.getElementById('chatModal').style.display='none'">✖</span>
                 </div>
 
                 <div id="chatMessages" class="chat-messages"
-                    style="flex:1; background:rgba(0,0,0,0.3); border-radius:8px; padding:10px; margin-bottom:10px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;">
+                    style="flex:1; background:rgba(0,0,0,0.2); border-radius:12px; padding:15px; margin-bottom:15px; overflow-y:auto; display:flex; flex-direction:column; gap:4px;">
                     <!-- Msgs -->
                 </div>
 
-                <div class="chat-input-area" style="display:flex; gap:5px;">
+                <div class="chat-input-area"
+                    style="display:flex; gap:10px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 12px;">
                     <input type="text" id="chatInput"
-                        style="flex:1; background:#111; border:1px solid #333; color:#fff; padding:8px; border-radius:4px; font-size:12px;"
-                        placeholder="Type a message...">
+                        style="flex:1; background:transparent; border:none; color:#fff; padding:8px; font-size:14px; outline: none;"
+                        placeholder="Type a message..." onkeypress="if(event.key === 'Enter') sendChatMessage()">
                     <button onclick="sendChatMessage()"
-                        style="background:#18b046; color:#fff; border:none; padding:0 12px; border-radius:4px; cursor:pointer; font-weight:bold;">➤</button>
+                        style="background: var(--fire-gradient); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 18px;">➤</span>
+                    </button>
                 </div>
             </div>
+        </div>
+
+        <!-- Quick Hub (FIRE) -->
+        <div class="quick-hub">
+            <button class="hub-btn" onclick="location.href='tracker.html'" title="Log something!">🔥</button>
         </div>
 
     </div> <!-- End Dashboard Container -->
@@ -959,6 +1013,32 @@
                 }
             }
         }
+
+        // Fire Mode Toggle Logic
+        const fireToggle = document.getElementById('fireToggle');
+        let fireMode = localStorage.getItem('fireMode') === 'true';
+
+        function updateFireUI() {
+            if (fireMode) {
+                document.body.classList.add('fire-theme');
+                document.body.style.background = 'radial-gradient(circle at top, #ff416c33 0%, #000000 85%)';
+                fireToggle.textContent = 'FIRE MODE: ON';
+                fireToggle.style.background = 'var(--fire-gradient)';
+            } else {
+                document.body.classList.remove('fire-theme');
+                document.body.style.background = 'radial-gradient(circle at top, #0f3d1e 0%, #000000 85%)';
+                fireToggle.textContent = 'FIRE MODE: OFF';
+                fireToggle.style.background = 'rgba(255,255,255,0.1)';
+            }
+        }
+
+        fireToggle.addEventListener('click', () => {
+            fireMode = !fireMode;
+            localStorage.setItem('fireMode', fireMode);
+            updateFireUI();
+        });
+
+        updateFireUI();
     </script>
     <script src="js/dashboard.js?v=1.3"></script>
 </body>

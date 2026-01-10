@@ -6,11 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.CrossOrigin;
 
 @RestController
 @RequestMapping("/api/tips")
-@CrossOrigin(origins = "*")
 public class HealthTipController {
 
     @Autowired
@@ -19,5 +17,10 @@ public class HealthTipController {
     @GetMapping("/daily")
     public HealthTip getDailyTip() {
         return healthTipService.getTipForToday();
+    }
+
+    @GetMapping("/random")
+    public HealthTip getRandomTip() {
+        return healthTipService.getRandomTip();
     }
 }

@@ -535,6 +535,8 @@
                 <a href="health-tools.html" class="active">HEALTH TOOLS</a>
                 <a href="blog.html">BLOG</a>
                 <a href="trainers.html">TRAINERS</a>
+                <button id="fireToggle" class="fire-streak"
+                    style="margin-left: 20px; cursor: pointer; border: none; font-size: 11px;">FIRE MODE: OFF</button>
             </nav>
             <!-- Right Side Profile & Hamburger -->
             <div style="display:flex; gap:15px; align-items:center;">
@@ -578,9 +580,8 @@
         </div>
 
         <div class="cards-row">
-
             <!-- BMI Calculator -->
-            <div class="card">
+            <div class="card glass-card">
                 <div class="card-header">
                     <span class="card-icon icon-bmi">⚖️</span>
                     <span class="card-title">BMI Calculator</span>
@@ -639,7 +640,7 @@
             </div>
 
             <!-- Daily Health Tip -->
-            <div class="card">
+            <div class="card glass-card">
                 <div class="card-header">
                     <span class="card-icon icon-tip">💡</span>
                     <span class="card-title">Daily Health Tip</span>
@@ -660,12 +661,12 @@
         </div>
 
         <!-- Featured Insights -->
-        <div class="full-width-card">
+        <div class="full-width-card glass-card" id="featured-insights">
             <div class="full-width-header">
                 <span class="card-icon" style="color: #ffd700;">☀️</span>
                 <span class="fw-title">Featured Health Insights</span>
             </div>
-            <p class="fw-text">Evidence-based health recommendations for your daily routine</p>
+            <p class="fw-text">Log your BMI above to get a personalized health spark plan!</p>
         </div>
 
     </div>
@@ -706,10 +707,36 @@
         }
 
         // Basic user check
-        const userEmail = localStorage.getItem('userEmail');
-        if (!userEmail) {
+        const userEmail = localStorage.getItem('userEmail') || localStorage.getItem('fullName'); // Use fullName as fallback for demo
+        if (!userEmail && !localStorage.getItem('userId')) {
             window.location.href = 'login.html';
         }
+
+        // Fire Mode Toggle Logic
+        const fireToggle = document.getElementById('fireToggle');
+        let fireMode = localStorage.getItem('fireMode') === 'true';
+
+        function updateFireUI() {
+            if (fireMode) {
+                document.body.classList.add('fire-theme');
+                document.body.style.background = 'radial-gradient(circle at top, #ff416c33 0%, #000000 85%)';
+                fireToggle.textContent = 'FIRE MODE: ON';
+                fireToggle.style.background = 'var(--fire-gradient)';
+            } else {
+                document.body.classList.remove('fire-theme');
+                document.body.style.background = 'radial-gradient(circle at top, #0f3d1e 0%, #000000 85%)';
+                fireToggle.textContent = 'FIRE MODE: OFF';
+                fireToggle.style.background = 'rgba(255,255,255,0.1)';
+            }
+        }
+
+        fireToggle.addEventListener('click', () => {
+            fireMode = !fireMode;
+            localStorage.setItem('fireMode', fireMode);
+            updateFireUI();
+        });
+
+        updateFireUI();
     </script>
 </body>
 

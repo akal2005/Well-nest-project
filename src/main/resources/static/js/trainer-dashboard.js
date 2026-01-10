@@ -482,9 +482,8 @@ async function loadTrainerChat() {
                 const div = document.createElement("div");
                 const isMe = (msg.senderType === 'TRAINER');
 
-                div.className = `chat-msg ${isMe ? 'me' : 'them'}`;
+                div.className = `chat-bubble ${isMe ? 'me' : 'them'}`;
 
-                // Timestamp logic
                 let timeStr = "";
                 if (msg.sentAt) {
                     const date = new Date(msg.sentAt);
@@ -492,8 +491,8 @@ async function loadTrainerChat() {
                 }
 
                 div.innerHTML = `
-                    <div style="margin-bottom:2px;">${msg.message}</div>
-                    <div style="font-size: 10px; opacity: 0.7; text-align: right; margin-top: 2px;">${timeStr}</div>
+                    <div>${msg.message}</div>
+                    <span class="chat-time">${timeStr}</span>
                 `;
                 box.appendChild(div);
             });
@@ -501,6 +500,17 @@ async function loadTrainerChat() {
         }
     } catch (e) { console.error(e); }
 }
+
+function useTemplate(text) {
+    const input = document.getElementById('trainerChatInput');
+    if (input) {
+        input.value = text;
+        input.focus();
+    }
+}
+
+// Ensure useTemplate is globally accessible for onclick
+window.useTemplate = useTemplate;
 
 async function sendTrainerMessage() {
     const input = document.getElementById('trainerChatInput');

@@ -181,8 +181,12 @@ const fallbackTips = [
         text: "Fill half your plate with colourful vegetables to increase fibre and vitamins in every meal.",
     },
     {
-        category: "Mindfulness",
-        text: "Take 5 deep breaths before checking your phone in the morning to reduce stress and anxiety.",
+        category: "Habit",
+        text: "Prepare your workout clothes the night before to eliminate friction and stay consistent.",
+    },
+    {
+        category: "Focus",
+        text: "Deep work for 90 minutes followed by a 15-minute screen-free break boosts productivity.",
     }
 ];
 
@@ -206,7 +210,7 @@ function renderTip(tip) {
     `;
 }
 
-async function getNewTip() {
+async function getNewTip(isInitialLoad = false) {
     const container = document.getElementById("tip-container");
     // Show loading state
     container.innerHTML = `
@@ -216,9 +220,10 @@ async function getNewTip() {
     `;
 
     try {
-        // Fetch from OUR backend, which handles day-logic and database storage
-        const res = await fetch('/api/tips/daily');
-        if (!res.ok) throw new Error("Failed to fetch daily tip");
+        // Use /daily for initial load, /random for on-demand new tips
+        const endpoint = isInitialLoad ? '/api/tips/daily' : '/api/tips/random';
+        const res = await fetch(endpoint);
+        if (!res.ok) throw new Error("Failed to fetch health tip");
 
         const data = await res.json();
 
@@ -248,5 +253,5 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // first tip
-    getNewTip();
+    getNewTip(true);
 });

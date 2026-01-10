@@ -62,8 +62,7 @@ async function fetchPosts(type) {
     let isArticle = false;
 
     if (type === 'FEATURED') {
-        // "articles matching to users fitness goal"
-        url = `/api/articles/recommended?userEmail=${userEmail}`;
+        url = `/api/articles/featured`;
         isArticle = true;
     } else if (type === 'ALL_TRAINER_ARTICLES') {
         // Community Tab -> Split View
@@ -516,7 +515,7 @@ function renderPosts(items, container, isArticle) {
 
     items.forEach(item => {
         const div = document.createElement('div');
-        div.className = 'post-card';
+        div.className = `post-card ${item.featured ? 'fire-border' : ''}`;
 
         // Map fields
         const title = item.title;
@@ -597,6 +596,12 @@ function renderPosts(items, container, isArticle) {
 
                 <h3 class="post-title">${title}</h3>
                 <p class="post-excerpt">${content}</p>
+
+                ${item.featured ? `
+                <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                    <span style="background: var(--fire-gradient); color: white; padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase; box-shadow: 0 0 10px rgba(255, 107, 107, 0.4);">🔥 Featured Article</span>
+                </div>
+                ` : ''}
 
                 ${actionButtons}
                 

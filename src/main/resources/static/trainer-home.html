@@ -711,24 +711,56 @@
         </div>
     </div>
 
-    <!-- 3. Chat Modal -->
+    <!-- 3. Chat Modal (Dialog Writing Edition) -->
     <div id="chatModal" class="modal">
-        <div class="modal-content" style="max-width:400px; height: 500px; display:flex; flex-direction:column;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                <h3 style="color:#18b046;">Chat with <span id="chatClientName">Client</span></h3>
-                <span style="cursor:pointer; color:#aaa;" onclick="closeModal('chatModal')">✖</span>
+        <div class="modal-content glass-modal"
+            style="max-width:500px; height: 650px; display:flex; flex-direction:column; border-radius: 24px;">
+            <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom:15px;">
+                <div>
+                    <h3 style="color:#fff; margin:0;">Dialog with <span id="chatClientName"
+                            style="color: var(--fire-pink);">Client</span></h3>
+                    <p style="font-size: 11px; color: #aaa; margin: 4px 0 0 0;">Expert Guidance Session</p>
+                </div>
+                <span style="cursor:pointer; color:#aaa; font-size: 20px;" onclick="closeModal('chatModal')">✖</span>
             </div>
 
             <div id="trainerChatMessages" class="chat-messages"
-                style="flex:1; background:rgba(0,0,0,0.3); border-radius:8px; padding:10px; margin-bottom:10px; overflow-y:auto;">
+                style="flex:1; background:rgba(0,0,0,0.2); border-radius:12px; padding:15px; margin-bottom:15px; overflow-y:auto; display:flex; flex-direction:column; gap:4px;">
                 <!-- Msgs -->
             </div>
 
-            <div class="chat-input-area" style="display:flex; gap:5px;">
-                <input type="text" id="trainerChatInput" class="modal-input" style="margin-bottom:0;"
-                    placeholder="Type a message...">
+            <!-- Dialog Templates Area -->
+            <div style="margin-bottom: 10px;">
+                <p
+                    style="font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 5px; font-weight: bold;">
+                    Quick Dialogues</p>
+                <div class="template-container">
+                    <span class="template-chip"
+                        onclick="useTemplate('Great workout today! Keep pushing the intensity. 🔥')">Encouragement</span>
+                    <span class="template-chip"
+                        onclick="useTemplate('How is your hydration level? Remember to drink 3L+ daily. 💧')">Hydration
+                        Check</span>
+                    <span class="template-chip"
+                        onclick="useTemplate('I\'ve just updated your meal plan. Please take a look! 🥗')">Plan
+                        Update</span>
+                    <span class="template-chip"
+                        onclick="useTemplate('Rest is as important as reps. Make sure you get 8hrs sleep tonight. 💤')">Rest
+                        Tip</span>
+                    <span class="template-chip"
+                        onclick="useTemplate('Focus on form over weight. Safety first! 🛡️')">Form Focus</span>
+                </div>
+            </div>
+
+            <div class="chat-input-area"
+                style="display:flex; gap:10px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 12px;">
+                <input type="text" id="trainerChatInput"
+                    style="flex:1; background:transparent; border:none; color:#fff; padding:8px; font-size:14px; outline: none;"
+                    placeholder="Type or select a template..."
+                    onkeypress="if(event.key === 'Enter') sendTrainerMessage()">
                 <button onclick="sendTrainerMessage()" class="modal-btn confirm"
-                    style="width:auto; padding:0 15px;">➤</button>
+                    style="width: 40px; height: 40px; border-radius: 50%; padding:0; display: flex; align-items: center; justify-content: center; background: var(--fire-gradient);">
+                    <span style="font-size: 18px;">➤</span>
+                </button>
             </div>
         </div>
     </div>

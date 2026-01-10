@@ -17,7 +17,6 @@ import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/tracker")
-@CrossOrigin(origins = "*")
 public class TrackerController {
 
         private final WorkoutLogRepository workoutRepo;

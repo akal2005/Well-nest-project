@@ -149,6 +149,65 @@ async function fetchTrainerInfo(userId) {
   }
 }
 
+async function loadExpertArticles() {
+  const container = document.getElementById('expertArticlesContent');
+  if (!container) return;
+
+  try {
+    const res = await fetch('/api/articles/featured');
+    const articles = await res.json();
+    container.innerHTML = '';
+
+    if (articles.length === 0) {
+      container.innerHTML = '<p style="color: #555; font-size: 13px;">No featured articles at the moment.</p>';
+      return;
+    }
+
+    articles.forEach(article => {
+      const card = document.createElement('div');
+      card.style.cssText = `
+        min-width: 280px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 16px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        cursor: pointer;
+        transition: 0.3s;
+      `;
+      card.onmouseover = () => { card.style.borderColor = 'var(--fire-pink)'; card.style.background = 'rgba(255,255,255,0.05)'; };
+      card.onmouseout = () => { card.style.borderColor = 'rgba(255,255,255,0.08)'; card.style.background = 'rgba(255,255,255,0.03)'; };
+      card.onclick = () => window.location.href = `article-details.html?id=${article.id}`;
+
+      card.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <span style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 6px; font-size: 10px; color: #aaa; text-transform: uppercase;">${article.specialization || 'General'}</span>
+            <span style="font-size: 14px;">🔥</span>
+        </div>
+        <h4 style="margin: 0; color: #fff; font-size: 15px; line-height: 1.4;">${article.title}</h4>
+        <p style="margin: 0; color: #aaa; font-size: 12px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${article.description}</p>
+        <div style="margin-top: auto; display: flex; align-items: center; gap: 8px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05);">
+            <div style="width: 24px; height: 24px; background: #333; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: #fff; border: 1px solid var(--fire-pink);">
+                ${(article.trainerName || 'T').charAt(0)}
+            </div>
+            <span style="font-size: 11px; color: #ddd; font-weight: 500;">${article.trainerName || 'Expert Trainer'}</span>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  } catch (err) {
+    console.error("Failed to load expert articles:", err);
+    container.innerHTML = '<p style="color: #666; font-size: 12px;">Expert content currently unavailable.</p>';
+  }
+}
+
+async function loadSocialFeed() {
+  // This function will be implemented later
+  console.log("Loading social feed...");
+}
+
 async function loadAssignedPlans(relationshipId) {
   const token = localStorage.getItem("token");
 
@@ -211,11 +270,10 @@ async function loadChatHistory(relationshipId) {
 
       messages.forEach(msg => {
         const div = document.createElement("div");
-        // Check sender type. If generic "USER" vs "TRAINER", user is always "USER".
         const isMe = (msg.senderType === 'USER');
 
-        div.className = `chat-msg ${isMe ? 'me' : 'them'}`;
-        // Timestamp logic
+        div.className = `chat-bubble ${isMe ? 'me' : 'them'}`;
+
         let timeStr = "";
         if (msg.sentAt) {
           const date = new Date(msg.sentAt);
@@ -223,8 +281,8 @@ async function loadChatHistory(relationshipId) {
         }
 
         div.innerHTML = `
-            <div style="margin-bottom:2px;">${msg.message}</div>
-            <div style="font-size: 10px; opacity: 0.7; text-align: ${isMe ? 'right' : 'left'}; margin-top: 2px;">${timeStr}</div>
+            <div>${msg.message}</div>
+            <span class="chat-time">${timeStr}</span>
         `;
         chatBox.appendChild(div);
       });

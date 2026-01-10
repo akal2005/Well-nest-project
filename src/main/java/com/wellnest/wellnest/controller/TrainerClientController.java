@@ -18,7 +18,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/trainer-client")
-@CrossOrigin(origins = "*")
 public class TrainerClientController {
 
     @Autowired

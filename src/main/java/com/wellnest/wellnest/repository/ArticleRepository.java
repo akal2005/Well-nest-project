@@ -10,4 +10,6 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
     List<Article> findByTrainerEmailOrderByCreatedAtDesc(String trainerEmail);
 
     List<Article> findBySpecializationContainingIgnoreCase(String specialization);
+
+    List<Article> findByFeaturedTrueOrderByCreatedAtDesc();
 }

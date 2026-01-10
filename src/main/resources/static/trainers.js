@@ -71,3 +71,33 @@ function renderTrainers(trainers, gridElement) {
         gridElement.appendChild(card);
     });
 }
+async function applyFilters() {
+    const userEmail = localStorage.getItem('userEmail');
+    const name = document.getElementById('filterName').value;
+    const type = document.getElementById('filterType').value;
+    const location = document.getElementById('filterLocation').value;
+    const availability = document.getElementById('filterAvailability').value;
+
+    const allGrid = document.getElementById('allTrainersGrid');
+    const recSection = document.getElementById('recommendedSection');
+
+    allGrid.innerHTML = '<p style="text-align:center; width:100%;">Searching...</p>';
+    recSection.style.display = 'none'; // Hide recommendations during explicit search
+
+    try {
+        const url = `/api/trainers/recommend?userEmail=${userEmail}&name=${encodeURIComponent(name)}&type=${encodeURIComponent(type)}&location=${encodeURIComponent(location)}&availability=${encodeURIComponent(availability)}`;
+        const response = await fetch(url);
+        if (response.ok) {
+            const trainers = await response.json();
+            renderTrainers(trainers, allGrid);
+        } else {
+            allGrid.innerHTML = '<p style="text-align:center; width:100%;">Search failed.</p>';
+        }
+    } catch (error) {
+        console.error('Search error:', error);
+        allGrid.innerHTML = '<p style="text-align:center; width:100%;">Error during search.</p>';
+    }
+}
+
+// make function visible to HTML onclick
+window.applyFilters = applyFilters;
