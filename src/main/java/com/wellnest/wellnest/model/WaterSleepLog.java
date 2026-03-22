@@ -15,28 +15,68 @@ public class WaterSleepLog {
 
     private LocalDate logDate;
 
-    private Double waterIntakeLiters;  // e.g. 2.5
-    private Double sleepHours;         // e.g. 7.0
-    private String sleepQuality;       // Poor / Ok / Good / Excellent
+    private Double waterIntakeLiters; // e.g. 2.5
+    private Double sleepHours; // e.g. 7.0
+    private String sleepQuality; // Poor / Ok / Good / Excellent
+    private String notes; // Optional notes for habits
 
-    public WaterSleepLog() {}
+    public WaterSleepLog() {
+    }
 
     // getters & setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public LocalDate getLogDate() { return logDate; }
-    public void setLogDate(LocalDate logDate) { this.logDate = logDate; }
+    public Long getUserId() {
+        return userId;
+    }
 
-    public Double getWaterIntakeLiters() { return waterIntakeLiters; }
-    public void setWaterIntakeLiters(Double waterIntakeLiters) { this.waterIntakeLiters = waterIntakeLiters; }
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
 
-    public Double getSleepHours() { return sleepHours; }
-    public void setSleepHours(Double sleepHours) { this.sleepHours = sleepHours; }
+    public LocalDate getLogDate() {
+        return logDate;
+    }
 
-    public String getSleepQuality() { return sleepQuality; }
-    public void setSleepQuality(String sleepQuality) { this.sleepQuality = sleepQuality; }
+    public void setLogDate(LocalDate logDate) {
+        this.logDate = logDate;
+    }
+
+    public Double getWaterIntakeLiters() {
+        return waterIntakeLiters;
+    }
+
+    public void setWaterIntakeLiters(Double waterIntakeLiters) {
+        this.waterIntakeLiters = waterIntakeLiters;
+    }
+
+    public Double getSleepHours() {
+        return sleepHours;
+    }
+
+    public void setSleepHours(Double sleepHours) {
+        this.sleepHours = sleepHours;
+    }
+
+    public String getSleepQuality() {
+        return sleepQuality;
+    }
+
+    public void setSleepQuality(String sleepQuality) {
+        this.sleepQuality = sleepQuality;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
 }

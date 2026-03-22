@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Health Tools - WellNest</title>
+    <title>Health Tools - REHAB-360</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -519,6 +519,80 @@
             font-size: 12px;
             border-top: 1px solid rgba(255, 255, 255, 0.05);
         }
+
+        /* Chatbot Custom Styles */
+        .chat-container {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            height: 350px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .bot-msg {
+            align-self: flex-start;
+            background: rgba(0, 229, 255, 0.1);
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 12px 12px 12px 0;
+            max-width: 80%;
+            font-size: 13px;
+            line-height: 1.5;
+            border-left: 2px solid #00e5ff;
+        }
+
+        .user-msg {
+            align-self: flex-end;
+            background: #18b046;
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 12px 12px 0 12px;
+            max-width: 80%;
+            font-size: 13px;
+        }
+
+        .chat-input-area {
+            display: flex;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.4);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: #111;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+        }
+        
+        .chat-input:focus { border-color: #00e5ff; }
+
+        .chat-send-btn {
+            background: #00e5ff;
+            color: #000;
+            border: none;
+            padding: 0 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+        }
     </style>
 </head>
 
@@ -527,11 +601,12 @@
     <!-- Header -->
     <header class="header">
         <div class="nav-container">
-            <div class="logo-badge">WELLNEST</div>
+            <div class="logo-badge">REHAB-360</div>
             <nav class="nav-links">
                 <a href="home.html">HOME</a>
                 <a href="dashboard.html">DASHBOARD</a>
                 <a href="tracker.html">TRACKERS</a>
+                <a href="craving-tracker.html">CRAVING</a>
                 <a href="health-tools.html" class="active">HEALTH TOOLS</a>
                 <a href="blog.html">BLOG</a>
                 <a href="trainers.html">TRAINERS</a>
@@ -658,6 +733,26 @@
                 <button class="btn-outline" onclick="getNewTip()">GET NEW TIP</button>
             </div>
 
+            <!-- Emotion AI Chatbot (with External Integration Stub) -->
+            <div class="card glass-card" style="grid-column: 1 / -1;">
+                <div class="card-header">
+                    <span class="card-icon" style="color:#00e5ff;">🤖</span>
+                    <span class="card-title">Emotion Support Chatbot</span>
+                </div>
+                <p class="card-subtitle">Chat with our AI companion for recovery support and coping strategies.</p>
+
+
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatbox">
+                        <div class="bot-msg">Hello! I am your REHAB-360 AI companion. How are you feeling today? Are you struggling with any cravings? (Type 'sugar', 'gaming', 'alcohol', or 'smoking' for specific recovery steps).</div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" id="userInput" class="chat-input" placeholder="Type a message..." onkeypress="handleKey(event)">
+                        <button class="chat-send-btn" onclick="sendMessage()">SEND</button>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <!-- Featured Insights -->
@@ -672,7 +767,7 @@
     </div>
 
     <footer>
-        <p>© 2025 WellNest – Smart Health & Fitness Companion</p>
+        <p>© 2025 REHAB-360 – Smart Health & Fitness Companion</p>
     </footer>
 
     <script src="/js/health-tools.js"></script>
@@ -738,6 +833,17 @@
 
         updateFireUI();
     </script>
+
+<!-- Invisible Global Auto-Translator -->
+<div id="google_translate_hidden" style="display:none;"></div>
+<style>.skiptranslate iframe, .goog-te-banner-frame { display: none !important; } body { top: 0px !important; }</style>
+<script type="text/javascript">
+function googleTranslateElementInitHidden() {
+  new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_hidden');
+}
+</script>
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInitHidden"></script>
+
 </body>
 
 </html>

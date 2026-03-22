@@ -40,6 +40,8 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers("/api/user/**").hasRole("USER")
                         .requestMatchers("/api/trainer/**").hasRole("TRAINER")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/counsellor/**").hasAnyRole("TRAINER", "ADMIN")
                         .anyRequest().authenticated())
 
                 // JWT FILTER

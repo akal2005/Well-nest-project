@@ -12,4 +12,6 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
     List<Article> findBySpecializationContainingIgnoreCase(String specialization);
 
     List<Article> findByFeaturedTrueOrderByCreatedAtDesc();
+
+    long countByFeaturedTrue();
 }

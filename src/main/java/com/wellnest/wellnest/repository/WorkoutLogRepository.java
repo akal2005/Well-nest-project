@@ -13,4 +13,8 @@ public interface WorkoutLogRepository extends JpaRepository<WorkoutLog, Long> {
 
     // ✅ used by weekly analytics
     List<WorkoutLog> findByUserIdAndLogDateBetween(Long userId, LocalDate start, LocalDate end);
+
+    List<WorkoutLog> findByUserIdAndLogDate(Long userId, LocalDate logDate);
+
+    List<WorkoutLog> findByUserIdOrderByLogDateDesc(Long userId);
 }

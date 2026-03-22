@@ -13,4 +13,6 @@ public interface MealLogRepository extends JpaRepository<MealLog, Long> {
 
     // ✅ used by weekly analytics
     List<MealLog> findByUserIdAndLogDateBetween(Long userId, LocalDate start, LocalDate end);
+
+    List<MealLog> findByUserIdAndLogDate(Long userId, LocalDate logDate);
 }

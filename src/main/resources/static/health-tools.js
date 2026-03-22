@@ -89,7 +89,7 @@ function getSmartRecommendations(category) {
         obese: [
             "🚶 **Power Walk:** Start with a 15-min walk twice a day.",
             "🍎 **Cleanse:** Focus on whole foods and high-fiber veggies.",
-            "👨‍⚕️ **Consult:** Chat with a WellNest Trainer for a safe custom plan."
+            "👨‍⚕️ **Consult:** Chat with a REHAB-360 Trainer for a safe custom plan."
         ]
     };
     return plans[category] || [];

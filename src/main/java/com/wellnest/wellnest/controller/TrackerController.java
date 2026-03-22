@@ -88,6 +88,10 @@ public class TrackerController {
                                 ? Integer.valueOf(payload.get("carbs").toString())
                                 : null;
 
+                Integer fats = payload.get("fats") != null
+                                ? Integer.valueOf(payload.get("fats").toString())
+                                : null;
+
                 LocalDate date = payload.get("logDate") != null
                                 ? LocalDate.parse(payload.get("logDate").toString())
                                 : LocalDate.now();
@@ -103,6 +107,7 @@ public class TrackerController {
                 log.setCalories(calories);
                 log.setProtein(protein);
                 log.setCarbs(carbs);
+                log.setFats(fats);
                 log.setLogDate(date);
                 log.setMealTime(time);
 
@@ -131,6 +136,7 @@ public class TrackerController {
                                 : 0.0;
 
                 String quality = (String) payload.get("sleepQuality");
+                String notes = (String) payload.get("notes");
 
                 LocalDate date = payload.get("logDate") != null
                                 ? LocalDate.parse(payload.get("logDate").toString())
@@ -142,6 +148,7 @@ public class TrackerController {
                 log.setWaterIntakeLiters(water);
                 log.setSleepHours(sleep);
                 log.setSleepQuality(quality);
+                log.setNotes(notes);
 
                 WaterSleepLog saved = waterSleepRepo.save(log);
                 return ResponseEntity.ok(saved);
@@ -176,8 +183,9 @@ public class TrackerController {
                         dateIndexMap.put(d, i);
                 }
 
-                // 3. Process Workouts (Type Breakdown & Total Calories Burned)
+                // 3. Process Workouts (Type Breakdown, Frequency & Total Calories Burned)
                 Map<String, int[]> typeDataMap = new HashMap<>(); // Type -> [Sun, Mon...]
+                Map<String, Integer> typeFrequencyMap = new HashMap<>(); // Type -> Count
                 int[] calorieArr = new int[7]; // Burned
                 int todayCalories = 0;
 
@@ -191,9 +199,12 @@ public class TrackerController {
                         int cals = w.getCaloriesBurned() != null ? w.getCaloriesBurned() : 0;
                         String type = w.getExerciseType() != null ? w.getExerciseType() : "Other";
 
-                        // Add to breakdown
+                        // Add to breakdown (Duration)
                         typeDataMap.putIfAbsent(type, new int[7]);
                         typeDataMap.get(type)[idx] += duration;
+
+                        // Add to frequency (Count)
+                        typeFrequencyMap.put(type, typeFrequencyMap.getOrDefault(type, 0) + 1);
 
                         // Add to total calories
                         calorieArr[idx] += cals;
@@ -224,15 +235,22 @@ public class TrackerController {
                         consumedArr[idx] += cals;
                 }
 
-                // 5. Process Water (Today) & Sleep (Last 3 Days)
+                // 5. Process Water (Today & Weekly) & Sleep (Last 3 Days)
                 Double todayWater = 0.0;
+                double[] waterArr = new double[7];
                 List<Map<String, Object>> sleepHistory = new java.util.ArrayList<>();
 
-                // Find today's water
+                // Process Water Intake for the last 7 days
                 for (WaterSleepLog log : waterSleepLogs) {
-                        if (log.getLogDate().equals(today)) {
-                                if (log.getWaterIntakeLiters() != null)
-                                        todayWater += log.getWaterIntakeLiters();
+                        LocalDate d = log.getLogDate();
+                        if (dateIndexMap.containsKey(d)) {
+                                int idx = dateIndexMap.get(d);
+                                double water = log.getWaterIntakeLiters() != null ? log.getWaterIntakeLiters() : 0.0;
+                                waterArr[idx] += water;
+
+                                if (d.equals(today)) {
+                                        todayWater += water;
+                                }
                         }
                 }
 
@@ -276,9 +294,41 @@ public class TrackerController {
                 result.put("caloriesConsumed", consumedArr); // Consumed (NEW)
                 result.put("todayCalories", todayCalories);
                 result.put("todayWater", todayWater);
+                result.put("waterData", waterArr); // Weekly Water Data (NEW)
                 result.put("sleepHistory", sleepHistory); // List of {day, hours, quality}
+                result.put("workoutFrequency", typeFrequencyMap);
+                result.put("dailyStreak", calculateStreak(userId));
 
                 return result;
+        }
+
+        private int calculateStreak(Long userId) {
+                List<WorkoutLog> allWorkouts = workoutRepo.findByUserIdOrderByLogDateDesc(userId);
+                if (allWorkouts.isEmpty())
+                        return 0;
+
+                java.util.Set<LocalDate> uniqueDates = new java.util.HashSet<>();
+                for (WorkoutLog log : allWorkouts) {
+                        uniqueDates.add(log.getLogDate());
+                }
+
+                LocalDate today = LocalDate.now();
+                LocalDate yesterday = today.minusDays(1);
+
+                // If no workout today AND no workout yesterday, streak is broken
+                if (!uniqueDates.contains(today) && !uniqueDates.contains(yesterday)) {
+                        return 0;
+                }
+
+                int streak = 0;
+                LocalDate checkDate = uniqueDates.contains(today) ? today : yesterday;
+
+                while (uniqueDates.contains(checkDate)) {
+                        streak++;
+                        checkDate = checkDate.minusDays(1);
+                }
+
+                return streak;
         }
 
         // ========= WEEKLY ANALYTICS =========

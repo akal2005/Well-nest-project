@@ -1,8 +1,10 @@
 package com.wellnest.wellnest.controller;
 
 import com.wellnest.wellnest.model.Role;
+import com.wellnest.wellnest.model.SystemLog;
 import com.wellnest.wellnest.model.Trainer;
 import com.wellnest.wellnest.model.User;
+import com.wellnest.wellnest.repository.SystemLogRepository;
 import com.wellnest.wellnest.repository.TrainerRepository;
 import com.wellnest.wellnest.repository.UserRepository;
 import com.wellnest.wellnest.security.JwtUtil;
@@ -27,6 +29,9 @@ public class AuthController {
 
     @Autowired
     private TrainerRepository trainerRepository;
+
+    @Autowired
+    private SystemLogRepository systemLogRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -90,6 +95,13 @@ public class AuthController {
             }
         }
 
+        if (payload.get("height") != null) {
+            try {
+                user.setHeight(Double.parseDouble(payload.get("height").toString()));
+            } catch (Exception ignored) {
+            }
+        }
+
         if (payload.get("goal") != null) {
             user.setGoal(payload.get("goal").toString());
         }
@@ -127,6 +139,14 @@ public class AuthController {
             }
         }
 
+        // Log the registration event
+        SystemLog log = new SystemLog();
+        log.setAction(role == Role.TRAINER ? "TRAINER_SIGNUP" : "USER_SIGNUP");
+        log.setDetails("New " + role.name() + " registered: " + fullName);
+        log.setUserEmail(email);
+        log.setSeverity("INFO");
+        systemLogRepository.save(log);
+
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(Map.of("message", "Registration successful"));
     }
@@ -140,52 +160,70 @@ public class AuthController {
     // ================= LOGIN =================
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> payload) {
-        System.out.println("========== LOGIN ATTEMPT ==========");
-        System.out.println("Payload: " + payload);
+        try {
+            System.out.println("========== LOGIN ATTEMPT ==========");
+            System.out.println("Payload: " + payload);
 
-        String email = payload.get("email");
-        String password = payload.get("password");
+            String email = payload.get("email");
+            String password = payload.get("password");
 
-        if (email == null || password == null) {
-            System.out.println("Login Failed: Missing fields");
-            return ResponseEntity.badRequest().body("Email and password required");
-        }
-
-        Optional<User> userOpt = userRepository.findByEmail(email);
-        if (userOpt.isEmpty()) {
-            System.out.println("Login Failed: User not found for email: " + email);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
-        }
-
-        if (!passwordEncoder.matches(password, userOpt.get().getPassword())) {
-            System.out.println("Login Failed: Password mismatch for email: " + email);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
-        }
-
-        User user = userOpt.get();
-        System.out.println("Login Success: " + user.getEmail());
-        String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("userId", user.getId());
-        response.put("fullName", user.getFullName());
-        response.put("role", user.getRole());
-        response.put("token", token);
-        response.put("age", user.getAge());
-        response.put("weight", user.getWeight());
-        response.put("goal", user.getGoal());
-
-        if (user.getRole() == Role.TRAINER) {
-            Optional<Trainer> trainerOpt = trainerRepository.findByContactEmail(user.getEmail());
-            if (trainerOpt.isPresent()) {
-                response.put("trainerId", trainerOpt.get().getId());
-            } else {
-                // Fallback or data inconsistency
-                System.out.println("Warning: Trainer role but no Trainer entity found for email " + user.getEmail());
+            if (email == null || password == null) {
+                System.out.println("Login Failed: Missing fields");
+                return ResponseEntity.badRequest().body("Email and password required");
             }
-        }
 
-        return ResponseEntity.ok(response);
+            Optional<User> userOpt = userRepository.findByEmail(email);
+            if (userOpt.isEmpty()) {
+                System.out.println("Login Failed: User not found for email: " + email);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
+
+            User user = userOpt.get();
+            if (!passwordEncoder.matches(password, user.getPassword())) {
+                System.out.println("Login Failed: Password mismatch for email: " + email);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
+
+            System.out.println("Login Success: " + user.getEmail());
+            String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("userId", user.getId());
+            response.put("fullName", user.getFullName());
+            response.put("role", user.getRole());
+            response.put("token", token);
+            response.put("age", user.getAge());
+            response.put("weight", user.getWeight());
+            response.put("height", user.getHeight());
+            response.put("goal", user.getGoal());
+
+            if (user.getRole() == Role.TRAINER) {
+                Optional<Trainer> trainerOpt = trainerRepository.findByContactEmail(user.getEmail());
+                if (trainerOpt.isPresent()) {
+                    response.put("trainerId", trainerOpt.get().getId());
+                } else {
+                    System.out
+                            .println("Warning: Trainer role but no Trainer entity found for email " + user.getEmail());
+                }
+            }
+
+            // Log the login event
+            SystemLog log = new SystemLog();
+            log.setAction(user.getRole() == Role.TRAINER ? "TRAINER_LOGIN"
+                    : (user.getRole() == Role.ADMIN ? "ADMIN_LOGIN"
+                            : (user.getRole() == Role.COUNSELLOR ? "COUNSELLOR_LOGIN" : "USER_LOGIN")));
+            log.setDetails(user.getRole().name() + " logged in successfully.");
+            log.setUserEmail(user.getEmail());
+            log.setSeverity("INFO");
+            systemLogRepository.save(log);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.out.println("CRITICAL LOGIN ERROR: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Internal Server Error: " + e.getMessage());
+        }
     }
 
     // ================= FORGOT PASSWORD =================

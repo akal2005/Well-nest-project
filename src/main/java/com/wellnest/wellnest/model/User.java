@@ -49,6 +49,8 @@ public class User {
 
     private Double weight;
 
+    private Double height;
+
     @Column(length = 255)
     private String goal;
 
@@ -134,6 +136,14 @@ public class User {
 
     public void setWeight(Double weight) {
         this.weight = weight;
+    }
+
+    public Double getHeight() {
+        return height;
+    }
+
+    public void setHeight(Double height) {
+        this.height = height;
     }
 
     public String getGoal() {

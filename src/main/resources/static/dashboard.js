@@ -18,7 +18,7 @@ function initDashboard() {
   */
 
   // 2. Load User Info
-  const fullName = localStorage.getItem("fullName") || "WellNester";
+  const fullName = localStorage.getItem("fullName") || "REHAB-360er";
   const goal = localStorage.getItem("goal") || "Stay Fit";
   const age = localStorage.getItem("age") || "25";
   const weight = localStorage.getItem("weight") || "70";

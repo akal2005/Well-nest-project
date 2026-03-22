@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Craving Tracker - REHAB-360</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: radial-gradient(circle at top, #0f3d1e 0%, #000000 85%);
+            background-attachment: fixed;
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        .header {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(6px);
+            border-bottom: 1px solid rgba(24, 176, 70, 0.1);
+        }
+        .nav-container { max-width: 1200px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
+        .logo-badge { padding: 8px 14px; border-radius: 999px; background: rgba(24, 176, 70, 0.1); border: 1px solid #18b046; color: #18b046; font-weight: bold; text-transform: uppercase; font-size: 13px; }
+        .nav-links { display: flex; gap: 24px; font-size: 14px; }
+        .nav-links a { color: #f4f4f4; text-decoration: none; transition: 0.3s; text-transform: uppercase; }
+        .nav-links a:hover, .nav-links a.active { color: #18b046; }
+
+        .container { max-width: 1200px; margin: 100px auto 40px; padding: 0 20px; }
+        .page-header { margin-bottom: 30px; }
+        .page-header h1 { font-size: 32px; color: #18b046; }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 24px;
+            border-radius: 12px;
+            transition: 0.3s;
+        }
+        .card:hover { border-color: #18b046; }
+        .card h2 { font-size: 18px; color: #18b046; margin-bottom: 20px; text-transform: uppercase; }
+
+        /* Form styling from screenshot */
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-size: 13px; color: #aaa; margin-bottom: 8px; }
+        .slider-container { display: flex; flex-direction: column; gap: 5px; }
+        input[type="range"] {
+            width: 100%; height: 6px; background: #333; border-radius: 5px; outline: none; -webkit-appearance: none; appearance: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 18px; height: 18px; background: #18b046; border-radius: 50%; cursor: pointer;
+        }
+        .slider-labels { display: flex; justify-content: space-between; font-size: 11px; color: #666; margin-top: 5px; }
+
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; }
+        .checkbox-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #ddd; cursor: pointer; }
+        .checkbox-item input { accent-color: #18b046; }
+
+        .btn-entry {
+            width: 100%; padding: 12px; background: #18b046; color: #fff; border: none; border-radius: 6px;
+            font-weight: bold; text-transform: uppercase; cursor: pointer; margin-top: 10px; transition: 0.3s;
+        }
+        .btn-entry:hover { background: #14932a; }
+
+        .chart-container { height: 300px; padding-top: 20px; }
+
+        @media (max-width: 900px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Profile Dropdown */
+        .profile-container { position: relative; cursor: pointer; }
+        .profile-icon { font-size: 1.5rem; background: rgba(255, 255, 255, 0.1); padding: 8px; border-radius: 50%; }
+        .dropdown-menu { display: none; position: absolute; right: 0; top: 100%; background: #222; min-width: 160px; border-radius: 5px; border: 1px solid #444; z-index: 150; }
+        .dropdown-menu a { color: white; padding: 12px 16px; text-decoration: none; display: block; font-size: 13px; }
+        .dropdown-menu a:hover { background: #333; }
+        .show { display: block; }
+
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="nav-container">
+            <div class="logo-badge">REHAB-360</div>
+            <nav class="nav-links">
+                <a href="home.html">HOME</a>
+                <a href="dashboard.html">DASHBOARD</a>
+                <a href="tracker.html">TRACKERS</a>
+                <a href="craving-tracker.html" class="active">CRAVING</a>
+                <a href="health-tools.html">TOOLS</a>
+                <a href="blog.html">BLOG</a>
+            </nav>
+            <div class="profile-container" onclick="toggleDropdown()">
+                <div class="profile-icon">👤</div>
+                <div id="myDropdown" class="dropdown-menu">
+                    <a href="profile.html">Update Profile</a>
+                    <a id="logoutLink" href="#" onclick="logout()">Logout</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Craving Tracker</h1>
+            <p>Monitor intensity, map triggers, and prevent relapse using AI-driven insights.</p>
+        </div>
+
+        <div class="dashboard-grid">
+            
+            <!-- Add Entry Card -->
+            <div class="card">
+                <h2>Add Craving Entry</h2>
+                
+                <div class="form-group">
+                    <label class="form-label">Craving Intensity (0-10)</label>
+                    <div class="slider-container">
+                        <input type="range" id="intensity" min="0" max="10" value="5">
+                        <div class="slider-labels">
+                            <span>0 (None)</span>
+                            <span id="intVal">5</span>
+                            <span>10 (Severe)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Stress Level (1-10)</label>
+                    <div class="slider-container">
+                        <input type="range" id="stress" min="1" max="10" value="5">
+                        <div class="slider-labels">
+                            <span>1 (Low)</span>
+                            <span id="stressVal">5</span>
+                            <span>10 (High)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Mood Score (1-10)</label>
+                    <div class="slider-container">
+                        <input type="range" id="mood" min="1" max="10" value="6">
+                        <div class="slider-labels">
+                            <span>1 (Poor)</span>
+                            <span id="moodVal">6</span>
+                            <span>10 (Excellent)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Triggers</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-item"><input type="checkbox" id="triggerLocation"> High-Risk Location</label>
+                        <label class="checkbox-item"><input type="checkbox" id="triggerSocial"> Social Trigger</label>
+                        <label class="checkbox-item"><input type="checkbox" id="triggerWork"> Work Stress</label>
+                        <label class="checkbox-item"><input type="checkbox" id="triggerFatigue"> Fatigue</label>
+                        <label class="checkbox-item"><input type="checkbox" id="triggerHunger"> Hunger</label>
+                        <label class="checkbox-item"><input type="checkbox" id="triggerPain"> Physical Pain</label>
+                        <label class="checkbox-item"><input type="checkbox" id="triggerMed"> Medication Taken</label>
+                    </div>
+                </div>
+
+                <button class="btn-entry" onclick="saveCraving()">Add Entry</button>
+            </div>
+
+            <!-- History Chart Card -->
+            <div class="card">
+                <h2>Craving History</h2>
+                <div class="chart-container">
+                    <canvas id="cravingChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Current Triggers Card -->
+            <div class="card" style="grid-column: span 2;">
+                <h2>AI Trigger Snapshot</h2>
+                <div style="display: flex; gap: 40px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 250px;">
+                        <span class="form-label">Current Stress Level</span>
+                        <div class="slider-container">
+                            <input type="range" disabled value="7">
+                            <div class="slider-labels"><span>Low</span><span>High</span></div>
+                        </div>
+                    </div>
+                    <div style="flex: 1; min-width: 250px;">
+                        <span class="form-label">Top Identified Trigger</span>
+                        <div style="font-size: 24px; color: #18b046; font-weight: bold; margin-top: 10px;">SOCIAL ENVIRONMENT</div>
+                        <p style="font-size: 12px; color: #aaa; margin-top: 5px;">AI suggests: "Avoid crowded bars this weekend."</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="js/craving-tracker.js"></script>
+    <script>
+        function toggleDropdown() { document.getElementById("myDropdown").classList.toggle("show"); }
+        window.onclick = function(event) {
+            if (!event.target.matches('.profile-icon') && !event.target.matches('.profile-container')) {
+                var dms = document.getElementsByClassName("dropdown-menu");
+                for (var i = 0; i < dms.length; i++) { if (dms[i].classList.contains('show')) dms[i].classList.remove('show'); }
+            }
+        }
+        function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+
+        // Live slider updates
+        ['intensity','stress','mood'].forEach(id => {
+            const s = document.getElementById(id);
+            const v = document.getElementById(id + 'Val');
+            s.oninput = function() { v.innerText = this.value; }
+        });
+    </script>
+
+<!-- Invisible Global Auto-Translator -->
+<div id="google_translate_hidden" style="display:none;"></div>
+<style>.skiptranslate iframe, .goog-te-banner-frame { display: none !important; } body { top: 0px !important; }</style>
+<script type="text/javascript">
+function googleTranslateElementInitHidden() {
+  new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_hidden');
+}
+</script>
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInitHidden"></script>
+
+</body>
+</html>

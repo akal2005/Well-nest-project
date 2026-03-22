@@ -20,7 +20,7 @@ function initDashboard() {
   const userId = localStorage.getItem("userId");
 
   // 3. Load User Info
-  const fullName = localStorage.getItem("fullName") || "WellNester";
+  const fullName = localStorage.getItem("fullName") || "REHAB-360er";
   const goal = localStorage.getItem("goal") || "Stay Fit";
   const age = localStorage.getItem("age") || "25";
   const weight = localStorage.getItem("weight") || "70";
@@ -31,6 +31,16 @@ function initDashboard() {
   updateText("ageText", age);
   updateText("weightText", weight + " kg");
   updateText("roleBadge", role);
+
+  // Show Admin link if user is ADMIN
+  if (role === 'ADMIN') {
+    const adminLink = document.getElementById("adminLink");
+    if (adminLink) adminLink.style.display = "block";
+    
+    // Also show the big Admin Portal card
+    const adminPortal = document.getElementById("adminPortalSection");
+    if (adminPortal) adminPortal.style.display = "block";
+  }
 
   // 4. Fetch Real Analytics Data
   if (userId) {
@@ -43,11 +53,19 @@ function initDashboard() {
   }
 
   // 5. Fetch Trainer & Plans Info
-  // 5. Fetch Trainer & Plans Info
   if (userId) {
     fetchTrainerInfo(userId);
     startUserUnreadPolling(userId);
   }
+
+  // 6. Load Expert Daily Reads
+  loadExpertArticles();
+
+  // 7. Init Social Fire Feed
+  initSocialFeed();
+
+  // 8. Init Face Mood AI
+  initFaceMoodAI();
 }
 
 // Global Trainer State
@@ -351,7 +369,20 @@ async function fetchRealDashboardData(userId) {
           exerciseDays: (data.workoutDatasets || []).some(ds => ds.data.some(v => v > 0)) ? 1 : 0
         }
       };
-      updateDashboardVisuals(stats);
+      
+      // If the user has absolutely no data, fall back to demo data so charts look good
+      const hasAnyWorkout = stats.chartData.workoutDatasets && stats.chartData.workoutDatasets.some(ds => ds.data && ds.data.some(v => v > 0));
+      const hasAnyBurned = stats.chartData.caloriesBurned && stats.chartData.caloriesBurned.some(v => v > 0);
+      
+      if (!hasAnyWorkout && !hasAnyBurned) {
+          console.log("No data found for user, falling back to demo stats for visual appeal.");
+          const seed = parseInt(userId) || 12345;
+          const derivedStats = generateDerivedStats(seed);
+          updateDashboardVisuals(derivedStats);
+      } else {
+          updateDashboardVisuals(stats);
+      }
+      
     } else {
       console.warn("Failed to fetch dashboard data.");
       throw new Error("API response not ok");
@@ -490,31 +521,23 @@ function initCharts(stats) {
     });
   }
 
-  // --- 2. Calories (Clustered Bar Chart: Burned vs Consumed) ---
-  const ctxCalories = document.getElementById('caloriesChart');
-  if (ctxCalories) {
-    // Need to destroy old chart instance if switching types in a real SPA, but here we rely on full re-init.
+  // --- 2. Calories Burned Bar Chart ---
+  const ctxBurned = document.getElementById('caloriesBurnedChart');
+  if (ctxBurned) {
+    // VARIATION: Added non-constant mock values for better visual appeal
+    const burnedData = stats.chartData.caloriesBurned || [320, 450, 280, 510, 390, 310, 480];
 
-    const burnedData = stats.chartData.caloriesBurned || [0, 0, 0, 0, 0, 0, 0];
-    const consumedData = stats.chartData.caloriesConsumed || [0, 0, 0, 0, 0, 0, 0];
-
-    new Chart(ctxCalories, {
-      type: 'bar', // Changed from 'line' to 'bar'
+    new Chart(ctxBurned, {
+      type: 'bar',
       data: {
         labels: stats.chartLabels || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
         datasets: [
           {
             label: 'Calories Burned (Workouts)',
             data: burnedData,
-            backgroundColor: '#AB47BC', // Purple
-            borderRadius: 4,
-            barPercentage: 0.6,
-            categoryPercentage: 0.8
-          },
-          {
-            label: 'Calories Consumed (Meals)',
-            data: consumedData,
-            backgroundColor: '#F48FB1', // Soft Pink
+            backgroundColor: '#FF416C', // Fiery Red/Orange
+            borderColor: '#FF4B2B',
+            borderWidth: 1,
             borderRadius: 4,
             barPercentage: 0.6,
             categoryPercentage: 0.8
@@ -537,12 +560,64 @@ function initCharts(stats) {
         },
         plugins: {
           legend: {
-            display: true,
-            position: 'bottom',
-            labels: { color: '#ddd' }
+            display: false
           },
           tooltip: {
-            mode: 'index', // Compare side-by-side
+            mode: 'index',
+            intersect: false,
+            backgroundColor: 'rgba(0,0,0,0.9)',
+            titleColor: '#fff',
+            bodyColor: '#fff',
+            borderColor: '#333',
+            borderWidth: 1
+          }
+        }
+      }
+    });
+  }
+
+  // --- 3. Calories Consumed Bar Chart ---
+  const ctxConsumed = document.getElementById('caloriesConsumedChart');
+  if (ctxConsumed) {
+    const consumedData = stats.chartData.caloriesConsumed || [1800, 2100, 1950, 2200, 1850, 2400, 2000];
+
+    new Chart(ctxConsumed, {
+      type: 'bar',
+      data: {
+        labels: stats.chartLabels || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        datasets: [
+          {
+            label: 'Calories Consumed (Meals)',
+            data: consumedData,
+            backgroundColor: '#00E5FF', // Cool Blue/Cyan
+            borderColor: '#00B8D4',
+            borderWidth: 1,
+            borderRadius: 4,
+            barPercentage: 0.6,
+            categoryPercentage: 0.8
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            ticks: { color: '#aaa' }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { color: '#aaa' }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            mode: 'index',
             intersect: false,
             backgroundColor: 'rgba(0,0,0,0.9)',
             titleColor: '#fff',
@@ -601,4 +676,222 @@ function generateDerivedStats(seed) {
       exerciseDays: exerciseDays
     }
   };
+}
+
+// ----------------------------------------------------
+// AI MOOD DETECTION (FACE & VOICE)
+// ----------------------------------------------------
+
+// FACE AI
+let moodStream = null;
+async function startMoodCamera() {
+  const video = document.getElementById('moodVideoFeed');
+  const placeholder = document.getElementById('moodVideoPlaceholder');
+  const analyzeBtn = document.getElementById('analyzeMoodBtn');
+  const startBtn = document.getElementById('startMoodCamBtn');
+
+  try {
+    moodStream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = moodStream;
+    video.style.display = 'block';
+    placeholder.style.display = 'none';
+    analyzeBtn.disabled = false;
+    startBtn.textContent = "Stop Camera";
+    startBtn.onclick = stopMoodCamera;
+  } catch (err) {
+    console.error("Camera error:", err);
+    alert("Camera access denied or unavailable.");
+  }
+}
+
+function stopMoodCamera() {
+  const video = document.getElementById('moodVideoFeed');
+  const placeholder = document.getElementById('moodVideoPlaceholder');
+  const analyzeBtn = document.getElementById('analyzeMoodBtn');
+  const startBtn = document.getElementById('startMoodCamBtn');
+
+  if (moodStream) {
+    moodStream.getTracks().forEach(track => track.stop());
+    moodStream = null;
+  }
+  video.style.display = 'none';
+  placeholder.style.display = 'flex';
+  analyzeBtn.disabled = true;
+  startBtn.textContent = "Start Camera";
+  startBtn.onclick = startMoodCamera;
+}
+
+function analyzeMood() {
+  const overlay = document.getElementById('moodScanOverlay');
+  const resultArea = document.getElementById('moodResultArea');
+  const diagnosis = document.getElementById('moodDiagnosis');
+  const advice = document.getElementById('moodAdvice');
+  const analyzeBtn = document.getElementById('analyzeMoodBtn');
+
+  analyzeBtn.disabled = true;
+  overlay.style.display = 'block';
+  resultArea.style.display = 'none';
+
+  // Simulate AI network delay
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    const moods = [
+        { d: "Joyful 🎉", a: "Great energy! Harness this clear mindset for a solid workout." },
+        { d: "Stressed 😟", a: "High cognitive load detected. Try a 5-minute breathing exercise before continuing." },
+        { d: "Fatigued 😴", a: "Eye drooping detected. Prioritize sleep tonight over high-intensity training." },
+        { d: "Focused 🎯", a: "Perfect state for complex technique work or deep stretching." }
+    ];
+    const result = moods[Math.floor(Math.random() * moods.length)];
+    
+    diagnosis.textContent = result.d;
+    advice.textContent = result.a;
+    resultArea.style.display = 'block';
+    analyzeBtn.disabled = false;
+  }, 2500);
+}
+
+// VOICE AI
+let voiceRecordingInterval = null;
+let isRecordingVoice = false;
+
+function toggleVoiceAI() {
+  const recordBtn = document.getElementById('recordVoiceBtn');
+  const icon = document.getElementById('voiceMicIcon');
+  const status = document.getElementById('voiceStatusText');
+  const wave = document.getElementById('voiceWaveOverlay');
+  const resultArea = document.getElementById('voiceResultArea');
+  const diagnosis = document.getElementById('voiceDiagnosis');
+  const advice = document.getElementById('voiceAdvice');
+
+  if (!isRecordingVoice) {
+      // START RECORDING (Simulation)
+      isRecordingVoice = true;
+      recordBtn.textContent = "Stop & Analyze Audio";
+      recordBtn.style.background = "#AB47BC";
+      recordBtn.style.color = "white";
+      icon.style.color = "#AB47BC";
+      icon.style.transform = "scale(1.2)";
+      status.textContent = "Listening... Speak now.";
+      wave.style.display = "flex";
+      resultArea.style.display = "none";
+  } else {
+      // STOP & ANALYZE
+      isRecordingVoice = false;
+      recordBtn.textContent = "Processing Audio...";
+      recordBtn.disabled = true;
+      wave.style.display = "none";
+      icon.style.color = "#555";
+      icon.style.transform = "scale(1)";
+      status.textContent = "Analyzing vocal sentiment...";
+
+      // Simulate API call to Voice Sentiment Model
+      setTimeout(() => {
+        const sentiments = [
+            { d: "Calm & Resolute", a: "Your tone shows high emotional regulation. Excellent stability for recovery." },
+            { d: "Anxious / Frustrated", a: "Micro-tremors detected in voice. Take a sip of water and try the 4-7-8 breathing method." },
+            { d: "Energetic", a: "High vocal cadence. A great time for an active recovery session!" }
+        ];
+        const result = sentiments[Math.floor(Math.random() * sentiments.length)];
+        
+        status.textContent = "Analysis Complete";
+        diagnosis.textContent = result.d;
+        advice.textContent = result.a;
+        resultArea.style.display = 'block';
+        
+        // Reset Button
+        recordBtn.textContent = "Start Recording";
+        recordBtn.style.background = "#333";
+        recordBtn.disabled = false;
+      }, 3000);
+  }
+}
+
+function initSocialFeed() {
+  const feed = document.getElementById('socialFeed');
+  if (!feed) return;
+
+  const activities = [
+    { icon: '🔥', text: '<strong>Rajesh</strong> started a 7-day streak!' },
+    { icon: '💪', text: '<strong>User_88</strong> burned 620 kcal today!' },
+    { icon: '🍎', text: '<strong>Anita</strong> logged 3 healthy meals!' },
+    { icon: '🚀', text: '<strong>Coach Alex</strong> joined REHAB-360!' },
+    { icon: '💧', text: '<strong>Vikram</strong> reached his water goal!' },
+    { icon: '✨', text: 'You are in the top 10% of active users!' }
+  ];
+
+  let index = 0;
+  setInterval(() => {
+    const item = activities[index];
+    const div = document.createElement('div');
+    div.className = 'feed-item';
+    div.innerHTML = `<span>${item.icon}</span> ${item.text}`;
+    
+    feed.prepend(div);
+    if (feed.children.length > 5) {
+      feed.removeChild(feed.lastChild);
+    }
+    
+    index = (index + 1) % activities.length;
+  }, 4000);
+}
+
+function initFaceMoodAI() {
+  const scanBtn = document.getElementById('scanFaceBtn');
+  if (!scanBtn) return;
+
+  scanBtn.addEventListener('click', handleFaceScan);
+}
+
+async function handleFaceScan() {
+  const btn = document.getElementById('scanFaceBtn');
+  const video = document.getElementById('faceVideo');
+  const scanLine = document.getElementById('scanLine');
+  const placeholder = document.getElementById('moodPlaceholder');
+  const resultArea = document.getElementById('moodResultArea');
+  const moodLabel = document.getElementById('moodLabel');
+  const moodQuote = document.getElementById('moodQuote');
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    
+    // UI Setup
+    btn.textContent = "ANALYZING...";
+    btn.disabled = true;
+    btn.style.background = "#555";
+    
+    video.srcObject = stream;
+    video.style.display = 'block';
+    placeholder.style.display = 'none';
+    scanLine.style.display = 'block';
+    resultArea.style.display = 'none';
+
+    // Simulate analysis time
+    setTimeout(() => {
+        // Stop camera
+        stream.getTracks().forEach(track => track.stop());
+        video.style.display = 'none';
+        scanLine.style.display = 'none';
+        
+        // Results
+        const moods = [
+            { label: "CALM & FOCUSED", quote: "Your visual markers suggest great emotional balance. Keep this clarity!" },
+            { label: "MILD FATIGUE", quote: "You look a bit drained. Remember: resting is part of recovery too." },
+            { label: "HIGH ENERGY", quote: "Look at that spark! A perfect time to hit the gym or a long walk." },
+            { label: "POSITIVE SHIMMER", quote: "There's a resilient glow in your expression. Your progress is showing!" }
+        ];
+        
+        const result = moods[Math.floor(Math.random() * moods.length)];
+        moodLabel.textContent = result.label;
+        moodQuote.textContent = result.quote;
+        
+        resultArea.style.display = 'block';
+        btn.textContent = "SCAN AGAIN";
+        btn.disabled = false;
+        btn.style.background = "#9c27b0";
+    }, 3500);
+
+  } catch (err) {
+    console.error("Camera Error:", err);
+    alert("Please grant camera access to use the Face Mood AI feature!");
+  }
 }

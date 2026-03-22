@@ -18,6 +18,8 @@ public class Article {
 
     private String specialization;
 
+    private String videoUrl; // Used for Video Integration feature
+
     private String imageUrl;
 
     private String trainerName;
@@ -29,6 +31,9 @@ public class Article {
     private LocalDateTime createdAt;
 
     private int likesCount = 0;
+
+    @Transient
+    private long activeClientsCount = 0;
 
     @ManyToMany
     @JoinTable(name = "article_likes", joinColumns = @JoinColumn(name = "article_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
@@ -74,6 +79,14 @@ public class Article {
 
     public void setSpecialization(String specialization) {
         this.specialization = specialization;
+    }
+
+    public String getVideoUrl() {
+        return videoUrl;
+    }
+
+    public void setVideoUrl(String videoUrl) {
+        this.videoUrl = videoUrl;
     }
 
     public String getImageUrl() {
@@ -134,5 +147,13 @@ public class Article {
 
     public void setComments(java.util.List<Comment> comments) {
         this.comments = comments;
+    }
+
+    public long getActiveClientsCount() {
+        return activeClientsCount;
+    }
+
+    public void setActiveClientsCount(long activeClientsCount) {
+        this.activeClientsCount = activeClientsCount;
     }
 }

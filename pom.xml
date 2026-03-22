@@ -9,8 +9,8 @@
     <version>0.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>wellnest</name>
-    <description>WellNest project</description>
+    <name>REHAB-360</name>
+    <description>REHAB-360 project for recovery and fitness</description>
 
     <parent>
         <groupId>org.springframework.boot</groupId>

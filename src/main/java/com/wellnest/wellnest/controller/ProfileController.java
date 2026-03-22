@@ -42,6 +42,8 @@ public class ProfileController {
                 user.setAge(Integer.parseInt(payload.get("age").toString()));
             if (payload.containsKey("weight"))
                 user.setWeight(Double.parseDouble(payload.get("weight").toString()));
+            if (payload.containsKey("height"))
+                user.setHeight(Double.parseDouble(payload.get("height").toString()));
             if (payload.containsKey("goal"))
                 user.setGoal((String) payload.get("goal"));
 

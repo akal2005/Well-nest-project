@@ -30,6 +30,12 @@ public class ArticleController {
     @Autowired
     private com.wellnest.wellnest.repository.CommentRepository commentRepository;
 
+    @Autowired
+    private com.wellnest.wellnest.repository.TrainerRepository trainerRepository;
+
+    @Autowired
+    private com.wellnest.wellnest.repository.TrainerClientRepository trainerClientRepository;
+
     // 1. Create Article
     @PostMapping
     public ResponseEntity<?> createArticle(
@@ -37,6 +43,7 @@ public class ArticleController {
             @RequestParam("description") String description,
             @RequestParam("specialization") String specialization,
             @RequestParam("trainerEmail") String trainerEmail,
+            @RequestParam(value = "videoUrl", required = false) String videoUrl,
             @RequestParam(value = "image", required = false) MultipartFile image) {
 
         System.out.println("Creating Article for: " + trainerEmail);
@@ -71,6 +78,7 @@ public class ArticleController {
         article.setTrainerEmail(trainerEmail);
         article.setTrainerName(trainerName);
         article.setImageUrl(imageUrl);
+        article.setVideoUrl(videoUrl);
 
         articleRepository.save(article);
         System.out.println("Article Saved: " + article.getId());
@@ -85,6 +93,7 @@ public class ArticleController {
             @RequestParam("title") String title,
             @RequestParam("description") String description,
             @RequestParam("specialization") String specialization,
+            @RequestParam(value = "videoUrl", required = false) String videoUrl,
             @RequestParam(value = "image", required = false) MultipartFile image) {
 
         Optional<Article> articleOpt = articleRepository.findById(id);
@@ -96,6 +105,7 @@ public class ArticleController {
         article.setTitle(title);
         article.setDescription(description);
         article.setSpecialization(specialization);
+        if (videoUrl != null) article.setVideoUrl(videoUrl);
 
         if (image != null && !image.isEmpty()) {
             try {
@@ -121,13 +131,26 @@ public class ArticleController {
     // 2. Get All Articles
     @GetMapping
     public List<Article> getAllArticles() {
-        return articleRepository.findAllByOrderByCreatedAtDesc();
+        List<Article> articles = articleRepository.findAllByOrderByCreatedAtDesc();
+        populateClientCounts(articles);
+        return articles;
+    }
+
+    private void populateClientCounts(List<Article> articles) {
+        for (Article art : articles) {
+            trainerRepository.findByContactEmail(art.getTrainerEmail()).ifPresent(t -> {
+                long count = trainerClientRepository.findByTrainerAndStatus(t, "ACTIVE").size();
+                art.setActiveClientsCount(count);
+            });
+        }
     }
 
     // 3. Get My Articles
     @GetMapping("/my-articles")
     public List<Article> getMyArticles(@RequestParam String email) {
-        return articleRepository.findByTrainerEmailOrderByCreatedAtDesc(email);
+        List<Article> articles = articleRepository.findByTrainerEmailOrderByCreatedAtDesc(email);
+        populateClientCounts(articles);
+        return articles;
     }
 
     // 4. Delete Article
@@ -219,12 +242,16 @@ public class ArticleController {
         if (user == null || user.getGoal() == null || user.getGoal().isEmpty()) {
             return java.util.Collections.emptyList();
         }
-        return articleRepository.findBySpecializationContainingIgnoreCase(user.getGoal());
+        List<Article> articles = articleRepository.findBySpecializationContainingIgnoreCase(user.getGoal());
+        populateClientCounts(articles);
+        return articles;
     }
 
     // 8. Get Featured Articles
     @GetMapping("/featured")
     public List<Article> getFeaturedArticles() {
-        return articleRepository.findByFeaturedTrueOrderByCreatedAtDesc();
+        List<Article> articles = articleRepository.findByFeaturedTrueOrderByCreatedAtDesc();
+        populateClientCounts(articles);
+        return articles;
     }
 }

@@ -1,4 +1,3 @@
-
 package com.wellnest.wellnest;
 
 import org.springframework.boot.SpringApplication;

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REHAB-360 | Admin Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --admin-primary: #ff4d4d;
+            --admin-bg: #0f172a;
+            --admin-card: rgba(30, 41, 59, 0.7);
+            --admin-text: #f8fafc;
+        }
+
+        body {
+            background: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 100%);
+            color: var(--admin-text);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+        }
+
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            padding: 1.5rem;
+            background: var(--admin-card);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--admin-card);
+            padding: 2rem;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--admin-primary);
+        }
+
+        .stat-val {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--admin-primary);
+            margin: 0.5rem 0;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.5rem;
+            border-radius: 12px;
+            width: fit-content;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            background: transparent;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        .tab-btn.active {
+            background: var(--admin-primary);
+            color: white;
+        }
+
+        .data-section {
+            background: var(--admin-card);
+            border-radius: 24px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th {
+            text-align: left;
+            padding: 1rem;
+            color: #94a3b8;
+            font-weight: 500;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-delete:hover {
+            background: #ef4444;
+            color: white;
+        }
+
+        .role-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .role-user {
+            background: rgba(59, 130, 246, 0.2);
+            color: #f63b3b;
+        }
+
+        .role-trainer {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .role-admin {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="admin-container">
+        <header>
+            <div class="brand">
+                <h1 style="color: var(--admin-primary); margin:0;">REHAB-360 <span
+                        style="font-weight:300; color:white;">Admin</span></h1>
+            </div>
+            <div class="user-info">
+                <button onclick="logout()" class="tab-btn" style="color: #ef4444;">Logout</button>
+            </div>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Registrations</h3>
+                <div class="stat-val" id="totalUsers">-</div>
+                <p style="color: #94a3b8;">Users on platform</p>
+            </div>
+            <div class="stat-card">
+                <h3>Active Trainers</h3>
+                <div class="stat-val" id="totalTrainers">-</div>
+                <p style="color: #94a3b8;">Certified experts</p>
+            </div>
+            <div class="stat-card">
+                <h3>Health Logs</h3>
+                <div class="stat-val" id="totalLogs">-</div>
+                <p style="color: #94a3b8;">Total tracking points</p>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('users')">Manage Users</button>
+            <button class="tab-btn" onclick="switchTab('trainers')">Manage Trainers</button>
+            <button class="tab-btn" onclick="switchTab('logs')">Activity Logs</button>
+            <button class="tab-btn" style="color: #ef4444; border: 1px solid rgba(239,68,68,0.3);"
+                onclick="switchTab('crisis')">⚠️ AI Crisis Alerts</button>
+            <button class="tab-btn" style="color: #8b5cf6; border: 1px solid rgba(139,92,246,0.3);"
+                onclick="switchTab('geo')">📍 Geo-Alerts</button>
+        </div>
+
+        <div class="data-section">
+            <div id="usersTable">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2>User Directory</h2>
+                    <input type="text" placeholder="Search users..." class="tab-btn"
+                        style="background: rgba(255,255,255,0.05); width: 300px; text-align: left;">
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Goal</th>
+                            <th>Risk Score</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userList">
+                        <!-- Users added dynamicly -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="trainersTable" style="display: none;">
+                <h2>Trainer Roster</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Trainer</th>
+                            <th>Specialization</th>
+                            <th>Experience</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trainerList">
+                        <!-- Trainers dynamic -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="logsTable" style="display: none;">
+                <h2>Activity Logs</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Action</th>
+                            <th>User Email</th>
+                            <th>Details</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logList">
+                        <!-- Logs dynamic -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="crisisTable" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2>AI Crisis Triggering & Escalation Alerts</h2>
+                    <span
+                        style="background: rgba(239, 68, 68, 0.2); color: #ef4444; padding: 0.5rem 1rem; border-radius: 8px; font-weight: bold;">Detects
+                        high-risk signals</span>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User Identifier</th>
+                            <th>Trigger Phrase / Signal</th>
+                            <th>Risk Level</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="crisisList">
+                        <!-- AI Crisis alerts dynamically added -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="geoTable" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2>📍 Relapse Heatmap & Geo-Fencing Alerts</h2>
+                    <span
+                        style="background: rgba(139, 92, 246, 0.2); color: #8b5cf6; padding: 0.5rem 1rem; border-radius: 8px; font-weight: bold;">Location
+                        Triggers Monitoring</span>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User Identifier</th>
+                            <th>Trigger Zone Detected</th>
+                            <th>Proximity/Status</th>
+                            <th>AI Action Taken</th>
+                        </tr>
+                    </thead>
+                    <tbody id="geoList">
+                        <!-- AI Geo alerts dynamically added -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/admin-dashboard.js"></script>
+    <script>
+        function logout() {
+            localStorage.clear();
+            window.location.href = "login.html";
+        }
+    </script>
+
+<!-- Invisible Global Auto-Translator -->
+<div id="google_translate_hidden" style="display:none;"></div>
+<style>.skiptranslate iframe, .goog-te-banner-frame { display: none !important; } body { top: 0px !important; }</style>
+<script type="text/javascript">
+function googleTranslateElementInitHidden() {
+  new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_hidden');
+}
+</script>
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInitHidden"></script>
+
+</body>
+</html>

@@ -17,40 +17,96 @@ public class MealLog {
     private LocalDate logDate;
     private LocalTime mealTime;
 
-    private String mealType;      // Breakfast / Lunch / Snack / Dinner
-    private String description;   // What did you eat?
+    private String mealType; // Breakfast / Lunch / Snack / Dinner
+    private String description; // What did you eat?
 
-    private Integer calories;     // optional
-    private Integer protein;      // optional (g)
-    private Integer carbs;        // optional (g)
+    private Integer calories; // optional
+    private Integer protein; // optional (g)
+    private Integer carbs; // optional (g)
 
-    public MealLog() {}
+    private Integer fats; // optional (g)
+
+    public MealLog() {
+    }
 
     // getters & setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public LocalDate getLogDate() { return logDate; }
-    public void setLogDate(LocalDate logDate) { this.logDate = logDate; }
+    public Long getUserId() {
+        return userId;
+    }
 
-    public LocalTime getMealTime() { return mealTime; }
-    public void setMealTime(LocalTime mealTime) { this.mealTime = mealTime; }
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
 
-    public String getMealType() { return mealType; }
-    public void setMealType(String mealType) { this.mealType = mealType; }
+    public LocalDate getLogDate() {
+        return logDate;
+    }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public void setLogDate(LocalDate logDate) {
+        this.logDate = logDate;
+    }
 
-    public Integer getCalories() { return calories; }
-    public void setCalories(Integer calories) { this.calories = calories; }
+    public LocalTime getMealTime() {
+        return mealTime;
+    }
 
-    public Integer getProtein() { return protein; }
-    public void setProtein(Integer protein) { this.protein = protein; }
+    public void setMealTime(LocalTime mealTime) {
+        this.mealTime = mealTime;
+    }
 
-    public Integer getCarbs() { return carbs; }
-    public void setCarbs(Integer carbs) { this.carbs = carbs; }
+    public String getMealType() {
+        return mealType;
+    }
+
+    public void setMealType(String mealType) {
+        this.mealType = mealType;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Integer getCalories() {
+        return calories;
+    }
+
+    public void setCalories(Integer calories) {
+        this.calories = calories;
+    }
+
+    public Integer getProtein() {
+        return protein;
+    }
+
+    public void setProtein(Integer protein) {
+        this.protein = protein;
+    }
+
+    public Integer getCarbs() {
+        return carbs;
+    }
+
+    public void setCarbs(Integer carbs) {
+        this.carbs = carbs;
+    }
+
+    public Integer getFats() {
+        return fats;
+    }
+
+    public void setFats(Integer fats) {
+        this.fats = fats;
+    }
 }

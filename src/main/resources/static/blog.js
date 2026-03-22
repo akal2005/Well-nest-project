@@ -288,7 +288,7 @@ function sharePost(id) {
     const url = window.location.origin + '/blog.html?post=' + id;
     if (navigator.share) {
         navigator.share({
-            title: 'Check out this post on WellNest',
+            title: 'Check out this post on REHAB-360',
             url: url
         }).catch(console.error);
     } else {
