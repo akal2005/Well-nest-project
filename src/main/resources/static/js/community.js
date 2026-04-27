@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const triggerKeywords = ["drink", "high", "drunk", "relapse", "suicide", "weed", "pills", "give up"];
 
-    function processMessage(rawText) {
+    async function processMessage(rawText) {
         if (!rawText) return;
         input.value = "";
 
@@ -52,45 +52,59 @@ document.addEventListener("DOMContentLoaded", () => {
         sendBtn.style.background = "#555";
         sendBtn.disabled = true;
 
-        setTimeout(() => {
+        try {
+            const GEMINI_API_KEY = "AIzaSyDkWtgvnFX1Rfgb7aQbBfuq1qyVOwK-M_s";
+            
+            const systemPrompt = `You are the invisible '✨ AI Moderator' for the REHAB-360 Addiction Recovery Community Forum. 
+Evaluate this new user post: "${rawText}"
+1. If the post contains severe crisis markers (suicide, extreme relapse, giving up completely), start your response EXACTLY with "[CRISIS]" followed by a highly supportive alert message recommending they talk to their trainer or try a breathing exercise.
+2. If the post is safe, act as a highly empathetic community member. Read the emotion of the post. If they are sad, comfort them. If they are happy or milestone-focused, celebrate with them enthusiastically. Keep your response under 3 sentences, very casual, and formatted as plain text with emojis.`;
+
+            const payload = {
+                contents: [{ role: "user", parts: [{ text: systemPrompt }] }]
+            };
+
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const aiText = data.candidates[0].content.parts[0].text.trim();
+
+                if (aiText.startsWith("[CRISIS]")) {
+                    const safeMsg = aiText.replace("[CRISIS]", "").trim();
+                    // Policy: Do not post message publicly. Send private automated alert to user.
+                    renderMessage("System", "system", `<strong>⚠️ AI Orchestrator Alert (Crisis Detection module)</strong><br>Your message contained potential distress markers. Taking care of our community means keeping the feed safe for those in active recovery. Your message was held for review.`);
+
+                    setTimeout(() => {
+                        renderMessage("System", "alert", `🤖 <strong>Auto-Adaptive Recommendation:</strong> ${safeMsg}`);
+                    }, 1500);
+                } else {
+                    // Policy: Safe token sentiment. Broadcast to Data Store and display to Chat.
+                    renderMessage("You", "me", rawText);
+
+                    // Organic AI reply from Community Moderator
+                    setTimeout(() => {
+                        renderMessage("✨ AI Moderator", "other", aiText);
+                    }, 2000);
+                }
+            } else {
+                // Fallback
+                renderMessage("You", "me", rawText);
+                setTimeout(() => renderMessage("✨ AI Moderator", "other", "I hear you. Keep taking it one day at a time! 💪"), 2000);
+            }
+        } catch (e) {
+            console.error("AI Mod Error:", e);
+            renderMessage("You", "me", rawText);
+        } finally {
             sendBtn.innerText = "POST MESSAGE";
             sendBtn.style.background = "#18b046";
             sendBtn.disabled = false;
             aiStatus.style.display = "none";
-
-            // 2. Preprocessing: Clean & Tokenize (Simulated)
-            const cleanText = rawText.toLowerCase().trim();
-
-            // 3. Emotion NLP / Crisis Detection (Simulated matching)
-            let flagged = false;
-            let detectedTrigger = "";
-
-            for (let word of triggerKeywords) {
-                if (cleanText.includes(word)) {
-                    flagged = true;
-                    detectedTrigger = word;
-                    break;
-                }
-            }
-
-            // 4. Orchestrator Policy & Outputs
-            if (flagged) {
-                // Policy: Do not post message publicly. Send private automated alert to user.
-                renderMessage("System", "system", `<strong>⚠️ AI Orchestrator Alert (Crisis Detection module)</strong><br>Your message contained a potential trigger word ("${detectedTrigger}"). Taking care of our community means keeping the feed safe for those in active recovery. Your message was held for review.`);
-
-                setTimeout(() => {
-                    renderMessage("System", "alert", `🤖 <strong>Auto-Adaptive Recommendation:</strong> We notice your text indicates potential distress. Sending an alert to your assigned coach. Would you like to start a Guided Breathwork session right now?`);
-                }, 1500);
-            } else {
-                // Policy: Safe token sentiment. Broadcast to Data Store and display to Chat.
-                renderMessage("You", "me", rawText);
-
-                // Simulate organic reply from Community
-                setTimeout(() => {
-                    renderMessage("Alex_R", "other", "That's great! Keep taking it one day at a time.");
-                }, 3000);
-            }
-        }, 1200); // Simulate network/AI processing latency
+        }
     }
 
     sendBtn.addEventListener("click", () => processMessage(input.value));

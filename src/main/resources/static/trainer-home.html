@@ -503,6 +503,35 @@
             border: 1px solid #ff9800;
         }
 
+        .btn-ai {
+            background: rgba(142, 36, 170, 0.2);
+            color: #e1bee7;
+            border: 1px solid #ab47bc;
+            box-shadow: 0 0 5px rgba(171, 71, 188, 0.5);
+            animation: pulse-border 2s infinite;
+        }
+
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 5px rgba(171, 71, 188, 0.2); }
+            50% { box-shadow: 0 0 10px rgba(171, 71, 188, 0.6); }
+            100% { box-shadow: 0 0 5px rgba(171, 71, 188, 0.2); }
+        }
+
+        .shimmer {
+            color: #aaa;
+            background: linear-gradient(90deg, #444 25%, #bbb 50%, #444 75%);
+            background-size: 200% 100%;
+            animation: shimmerEffect 2s infinite linear;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        @keyframes shimmerEffect {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
         .chat-msg {
             margin-bottom: 8px;
             padding: 8px 12px;
@@ -778,6 +807,27 @@
             <div class="modal-wc-actions">
                 <button onclick="closeModal('addClientModal')" class="modal-btn cancel">Cancel</button>
                 <button onclick="submitAddClient()" class="modal-btn confirm">Add Client</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. AI Summary Modal -->
+    <div id="aiSummaryModal" class="modal">
+        <div class="modal-content glass-modal" style="max-width:550px; border-color:#ab47bc; box-shadow: 0 0 20px rgba(171, 71, 188, 0.2);">
+            <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom:15px;">
+                <div>
+                    <h3 style="color:#e1bee7; margin:0;">✨ AI Progress Summary</h3>
+                    <p style="font-size: 11px; color: #aaa; margin: 4px 0 0 0;">Private Client Review for <span id="aiClientName" style="color:#fff; font-weight:bold;"></span></p>
+                </div>
+                <span style="cursor:pointer; color:#aaa; font-size: 20px;" onclick="closeModal('aiSummaryModal')">✖</span>
+            </div>
+
+            <div id="aiSummaryBody" style="background: rgba(0,0,0,0.4); padding: 20px; border-radius: 12px; min-height: 120px; font-size: 14px; color: #ddd; line-height: 1.6; border: 1px solid rgba(171,71,188,0.2);">
+                <p id="aiSummaryText" class="shimmer" style="margin: 0; padding: 10px; font-size: 14px;">Gathering past week of mood logs and analyzing emotional trends... Please wait.</p>
+            </div>
+
+            <div class="modal-wc-actions" style="margin-top: 20px;">
+                <button onclick="closeModal('aiSummaryModal')" class="modal-btn cancel" style="border-color: #ab47bc; color: #e1bee7; background: rgba(142, 36, 170, 0.1);">Close Report</button>
             </div>
         </div>
     </div>

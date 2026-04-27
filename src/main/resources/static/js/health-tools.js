@@ -2,7 +2,7 @@
 // GLOBAL STATE & API KEYS
 // =========================
 // ⚠️ PASTE YOUR GOOGLE GEMINI API KEY HERE: ⚠️
-const GEMINI_API_KEY = "AIzaSyAz256M2f7ZAuSI0defLaUzcFJSUSqf3XU";
+const GEMINI_API_KEY = "AIzaSyDkWtgvnFX1Rfgb7aQbBfuq1qyVOwK-M_s";
 
 let currentUnit = "metric"; // "metric" or "imperial"
 
@@ -260,8 +260,10 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // =========================
-// EMOTION CHATBOT & EXTERNAL AI STUB
+// EMOTION CHATBOT & ADVANCED AI
 // =========================
+
+let chatHistory = [];
 
 function toggleAIGuide() {
     const guide = document.getElementById('aiConnectionGuide');
@@ -278,6 +280,44 @@ function handleKey(event) {
     }
 }
 
+// Initial default quick replies
+document.addEventListener("DOMContentLoaded", () => {
+    // Other init code is above...
+    renderQuickReplies(["I'm craving something", "I feel anxious", "I need a distraction"]);
+});
+
+function renderQuickReplies(replies) {
+    const container = document.getElementById("quick-replies");
+    if (!container) return;
+    container.innerHTML = "";
+    
+    replies.forEach(reply => {
+        const btn = document.createElement("button");
+        btn.className = "quick-reply-btn";
+        btn.textContent = reply;
+        btn.onclick = () => {
+            const input = document.getElementById("userInput");
+            input.value = reply;
+            sendMessage();
+        };
+        container.appendChild(btn);
+    });
+}
+
+function generateDynamicQuickReplies(botResponse) {
+    const lower = botResponse.toLowerCase();
+    
+    if (lower.includes("breathe") || lower.includes("breathing") || lower.includes("5-4-3-2-1")) {
+        return ["I feel calmer now", "I'm still anxious", "What's next?"];
+    } else if (lower.includes("craving") || lower.includes("urge")) {
+        return ["How long will this last?", "I need a distraction", "Remind me why I quit"];
+    } else if (lower.includes("sad") || lower.includes("depressed")) {
+        return ["I just want to vent", "Give me a coping strategy", "I feel alone"];
+    } else {
+        return ["I understand", "Tell me more", "I need a distraction"];
+    }
+}
+
 async function sendMessage() {
     const input = document.getElementById("userInput");
     const text = input.value.trim();
@@ -285,6 +325,10 @@ async function sendMessage() {
 
     appendMessage(text, "user-msg");
     input.value = "";
+    
+    // Clear quick replies while loading
+    const qrContainer = document.getElementById("quick-replies");
+    if (qrContainer) qrContainer.innerHTML = "";
 
     // Typing indicator
     const typingId = "typing-" + Date.now();
@@ -303,6 +347,11 @@ async function sendMessage() {
         messages.forEach((msg, index) => {
             setTimeout(() => {
                 appendMessage(msg, "bot-msg");
+                
+                // Show new quick replies after the last message bubble
+                if (index === messages.length - 1) {
+                    renderQuickReplies(generateDynamicQuickReplies(msg));
+                }
             }, index * 800);
         });
     }, 1000);
@@ -327,6 +376,23 @@ function appendMessage(text, className, id = null) {
 async function getBotResponse(message) {
     const lowerMessage = message.toLowerCase();
 
+    // 1. URGENCY & SENTIMENT DETECTION
+    let isUrgent = false;
+    if (lowerMessage.includes("crisis") || lowerMessage.includes("give up") || lowerMessage.includes("can't do this") || lowerMessage.includes("suicide")) {
+        isUrgent = true;
+    }
+
+    // Add user message to memory
+    chatHistory.push({
+        role: "user",
+        parts: [{ text: message }]
+    });
+
+    // We keep history somewhat bounded
+    if (chatHistory.length > 10) {
+        chatHistory = chatHistory.slice(chatHistory.length - 10);
+    }
+
     // ------------------------------------------------------------------------------------------------
     // EXTERNAL AI CONNECTION (GEMINI)
     // ------------------------------------------------------------------------------------------------
@@ -335,24 +401,80 @@ async function getBotResponse(message) {
         const maxRetries = 2;
         for (let attempt = 0; attempt <= maxRetries; attempt++) {
             try {
+                // Determine system prompt based on urgency
+                let systemContext = `You are a highly empathetic, professional addiction recovery counselor. 
+IMPORTANT: When a user mentions a specific addiction (like smoking, drugs, alcohol, sugar, or gaming), provide a highly structured, step-by-step recovery guide formatted with emojis and clear sections. 
+
+Make sure to reply in a structure very similar to this:
+First—good that you said it openly. That's the hardest step already.
+[Addiction name] addiction is both physical and mental. So recovery means handling both.|[Addiction Emoji] **Step-by-step way to recover**
+
+**1. Understand your trigger**
+Ask yourself: When do you crave it most?
+👉 Once you know the trigger, you can control it.|**2. Don't stop suddenly (if heavy user)**
+Reduce slowly or seek medical detox if necessary.
+👉 Gradual reduction avoids immense withdrawal shocks.
+
+**3. Replace the habit**
+When craving comes, don't sit idle. [Give 3 specific healthy replacements].
+👉 Craving usually lasts only 5-10 minutes.|**4. Control your environment**
+Stay away from triggers and people who encourage the habit. Remove the substance/game from your room.
+
+**5. Use the 5-minute rule**
+When urge comes:
+👉 Tell yourself: "I will wait 5 minutes." Most cravings go away if you delay.|**6. Handle withdrawal symptoms**
+You may feel: [list 2 symptoms]. 
+This is normal. It means your body/brain is healing.
+👉 Drink more water + sleep well.
+
+**7. Set a clear reason**
+Write your reason: Health, Family, Money, Future.
+👉 Strong reason = strong control.
+
+**8. Track your progress**
+Example: Day 1 vs Day 5.
+👉 Seeing progress motivates you.
+
+Make sure to use bullet points, bold text (**), and pointers (👉). Separate the main logical groupings with the pipe character "|" so my frontend can split them into chat bubbles. Keep it highly practical.`;
+                
+                if (isUrgent) {
+                    systemContext = "The user seems to be in severe distress or crisis. Prioritize grounding them, validating their extreme pain, and strongly suggest they reach out to their trainer, a sponsor, or a local crisis hotline. Use a very gentle, supportive tone. Separate paragraphs with | for chat bubbles.";
+                }
+
+                // Compress chat history into a string to avoid strict Gemini role sequence validation errors
+                const historyString = chatHistory.map(msg => `${msg.role === 'model' ? 'Counselor' : 'User'}: ${msg.parts[0].text}`).join("\n\n");
+
+                const payloadContents = [
+                    { 
+                        role: "user", 
+                        parts: [{ text: `SYSTEM INSTRUCTIONS:\n${systemContext}\n\nCONVERSATION HISTORY:\n${historyString}\n\nCounselor:` }] 
+                    }
+                ];
+
                 const EXTERNAL_AI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
                 const response = await fetch(EXTERNAL_AI_ENDPOINT, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        contents: [{
-                            parts: [{
-                                text: "You are a professional, highly empathetic addiction recovery counselor. Provide detailed, supportive, and structured advice with actionable coping strategies. Feel free to use markdown bullet points for readability. The patient says: " + message
-                            }]
-                        }]
+                        contents: payloadContents
                     })
                 });
+                
                 if (!response.ok) {
                     const errorInfo = await response.json();
+                    console.error("Gemini API Error details:", errorInfo);
                     throw new Error(`Gemini API error ${response.status}: ${errorInfo.error?.message || "unknown"}`);
                 }
                 const data = await response.json();
-                return data.candidates[0].content.parts[0].text;
+                const botText = data.candidates[0].content.parts[0].text;
+                
+                // Add bot response to memory
+                chatHistory.push({
+                    role: "model",
+                    parts: [{ text: botText }]
+                });
+
+                return botText;
             } catch (e) {
                 console.error(`Gemini API attempt ${attempt + 1} failed:`, e);
                 if (attempt === maxRetries) {
@@ -365,45 +487,63 @@ async function getBotResponse(message) {
     }
 
 
-    // LOCAL FALLBACK / RULE-BASED RESPONSES
+    // LOCAL FALLBACK / RULE-BASED RESPONSES (Enhanced for Step-by-Step Response format)
+    let fallbackResponse = "";
 
-    // EMOTIONAL TRIGGERS
-    if (lowerMessage.includes("relapse") || lowerMessage.includes("failed") || lowerMessage.includes("slipped")) {
-        return "Please don't be hard on yourself. A slip is a lesson, not a failure.|1. **Stop and Breathe**: You are still in control of your next choice.|2. **Call Someone**: Reach out to your trainer or a supportive friend right now.|3. **Identify the Why**: What feeling or situation led to this? Knowing your triggers is the first step to a stronger tomorrow.";
+    const generateStepByStep = (addiction, emoji, triggers, replaceWait, withdraw) => {
+        return `First—good that you said it openly. That’s the hardest step already. ${addiction} addiction is both physical and mental. So recovery means handling both.|${emoji} **Step-by-step way to recover**\n\n**1. Understand your trigger**\nAsk yourself:\n• When do you crave it most? (${triggers})\n• Why do you crave it?\n👉 Once you know the trigger, you can control it.|**2. Don’t stop suddenly (if heavy user)**\nReduce slowly. Fix a daily limit.\n👉 Gradual reduction avoids strong withdrawal.\n\n**3. Replace the habit**\nWhen craving comes, don’t sit idle:\n${replaceWait}\n👉 Craving usually lasts only 5–10 minutes.|**4. Control your environment**\n• Stay away from triggers\n• Remove the substance/habit trigger from your room\n\n**5. Use the 5-minute rule**\nWhen urge comes:\n👉 Tell yourself: "I will wait 5 minutes"\nMost cravings go away if you delay.|**6. Handle withdrawal symptoms**\nYou may feel:\n${withdraw}\nThis is normal. It means your body is healing.\n👉 Drink more water + sleep well\n\n**7. Set a clear reason**\nWrite your reason: Health, Saving money, Family.\n👉 Strong reason = strong control\n\n**8. Track your progress**\n👉 Seeing progress motivates you!`;
+    };
+
+    if (isUrgent) {
+        fallbackResponse = "I can hear the immense weight and pain in your words right now. It takes profound courage to admit when you are at your breaking point, and I want you to know that you are not alone in this fight. This feeling of crisis is a temporary storm. | Please, take a deep, slow breath right now. Drop your shoulders. I strongly urge you to reach out to your assigned trainer, a trusted friend, or a hotline immediately. Human connection is your anchor.";
+    } else if (lowerMessage.includes("anxious") || lowerMessage.includes("stress")) {
+        fallbackResponse = "I hear the distress in your voice. Anxiety often feels like a sudden wave crashing over you. Let's redirect that chaotic energy. | Right now, let's try a guided Cognitive Behavioral Therapy (CBT) exercise. We will do the 5-4-3-2-1 Grounding Technique. | Step 1: Look around and find **5** things you can see around you right now. Tell me what they are in your mind. Focus deeply on their colors and shapes.";
+    } else if (lowerMessage.includes("sugar")) {
+        fallbackResponse = generateStepByStep(
+            "Sugar", "🍫", 
+            "stress, after food, boredom", 
+            "• Drink a large glass of water\n• Eat a piece of fruit\n• Take a walk", 
+            "• Headaches\n• Fatigue\n• Sugar cravings"
+        );
+    } else if (lowerMessage.includes("drug")) {
+        fallbackResponse = generateStepByStep(
+            "Drug", "💊", 
+            "emotional pain, peer pressure, specific locations", 
+            "• Call a sponsor/friend\n• Exercise vigorously\n• Take a hot shower", 
+            "• Restlessness\n• Sweats\n• Irritability"
+        );
+    } else if (lowerMessage.includes("alcohol")) {
+        fallbackResponse = generateStepByStep(
+            "Alcohol", "🍺", 
+            "after work, social events, loneliness", 
+            "• Pour a sparkling water\n• Call a friend\n• Exercise or clean the house", 
+            "• Anxiety\n• Shaking\n• Trouble sleeping"
+        );
+    } else if (lowerMessage.includes("gaming")) {
+        fallbackResponse = generateStepByStep(
+            "Gaming", "🎮", 
+            "escapism, boredom, late night", 
+            "• Read a book\n• Exercise or go outside\n• Call a friend", 
+            "• Irritability\n• Restlessness\n• Boredom"
+        );
+    } else if (lowerMessage.includes("smoke") || lowerMessage.includes("smoking") || lowerMessage.includes("cigarette") || lowerMessage.includes("nicotine") || lowerMessage.includes("vape")) {
+        fallbackResponse = generateStepByStep(
+            "Smoking", "🚭", 
+            "stress, after food, morning coffee", 
+            "• Chew gum / eat nuts\n• Drink water\n• Take a short walk", 
+            "• Irritation\n• Headache\n• Restlessness"
+        );
+    } else if (lowerMessage.includes("sad") || lowerMessage.includes("depressed")) {
+        fallbackResponse = "I am so sorry you are enduring this heavy emotional fog. It is incredibly common in early recovery to feel a profound sense of loss or sadness. Your feelings are entirely valid and real. | Would you prefer to explore a gentle breathing exercise to ease the physical heaviness in your chest, or do you just need a safe space to vent your thoughts right now?";
+    } else {
+        fallbackResponse = "I hear you, and I truly appreciate you sharing that with me. The journey of recovery is rarely a straight line; it is full of unexpected hurdles. | Every minute you sit with this discomfort without acting out, you are building new neural pathways of resilience. What is one small, gentle thing you can do for yourself in the next 5 minutes?";
     }
 
-    if (lowerMessage.includes("anxious") || lowerMessage.includes("stress") || lowerMessage.includes("worried")) {
-        return "I hear the weight in your words. Stress is often a major trigger for cravings.|Try the **5-4-3-2-1 Grounding Technique**:|5: Things you see|4: Things you can touch|3: Things you hear|2: Things you can smell|1: Thing you can taste.|This breaks the 'loop' of anxiety and brings you back to the present.";
-    }
+    // Add bot response to memory
+    chatHistory.push({
+        role: "model",
+        parts: [{ text: fallbackResponse }]
+    });
 
-    if (lowerMessage.includes("lonely") || lowerMessage.includes("alone")) {
-        return "Loneliness is one of the hardest parts of recovery, but you aren't alone – you have this community and me.|Consider reaching out to a support group or even just going to a public space like a park or library. Being around others, even without talking, can help lower the urge to use/crave.";
-    }
-
-    // ADDICTION CATEGORIES
-    if (lowerMessage.includes("sugar")) {
-        return "**Sugar Addiction Recovery Steps:**|1. **Identify the Trigger:** Are you hungry, stressed, or tired?|2. **Delay by 15 mins:** Wait before giving in; cravings usually pass.|3. **Hydrate:** Drink a large glass of water. Thirst is often mistaken for sugar cravings.|4. **Swap:** Eat a piece of fruit instead of refined sugar.";
-    }
-
-    if (lowerMessage.includes("gaming")) {
-        return "**Gaming Addiction Recovery Steps:**|1. **Unplug:** Physically disconnect the console to break the circuit.|2. **Change Scenery:** Leave the room immediately.|3. **Engage Hands:** Do pushups or cleaning to distract your muscle memory.|4. **Socialize**: Call someone. Isolation fuels gaming binges.";
-    }
-
-    if (lowerMessage.includes("alcohol")) {
-        return "**Alcohol Recovery Steps:**|1. **HALT Check:** Are you Hungry, Angry, Lonely, or Tired? Address that need first.|2. **Urge Surfing:** Acknowledge the craving. It will peak and fall like an ocean wave; just ride it out.|3. **Play the Tape Forward:** Imagine exactly how you will feel tomorrow morning if you drink now.|4. **Action**: Pour it out or leave the situation immediately.";
-    }
-
-    if (lowerMessage.includes("smoking") || lowerMessage.includes("vaping") || lowerMessage.includes("nicotine")) {
-        return "**Smoking/Nicotine Recovery Steps:**|1. **Deep Breathing:** Take 10 slow, deep breaths to simulate the physical action of smoking.|2. **Oral Substitute:** Chew sugarless gum or crunch on a carrot stick.|3. **Change Routine:** Do something you physically cannot do while smoking (like taking a shower).|4. **Focus**: The intense craving will only last 3-5 minutes. You can survive 5 minutes.";
-    }
-
-    if (lowerMessage.includes("sad") || lowerMessage.includes("depressed")) {
-        return "I'm so sorry you're feeling this weight. Recovery is an emotional journey, and it's okay to feel sad.|Would you like to try a quick breathing exercise, or simply vent? I am listening and I won't judge.";
-    }
-
-    if (lowerMessage.includes("hello") || lowerMessage.includes("hi")) {
-        return "Hello! I'm your REHAB-360 companion. I'm here to listen. Are you facing any specific cravings or feelings you'd like to work through right now?";
-    }
-
-    return "I hear you, and I am here for you. Staying on track takes immense strength.|Remember, cravings are like temporary physiological waves. They always pass if you don't feed them.|What is one small, healthy choice you can make in the next 5 minutes? (You can type 'sugar', 'alcohol', 'relapse' or 'anxious' for specific support).";
+    return fallbackResponse;
 }

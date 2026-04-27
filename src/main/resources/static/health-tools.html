@@ -583,6 +583,29 @@
         
         .chat-input:focus { border-color: #00e5ff; }
 
+        .quick-replies-container {
+            display: flex;
+            gap: 8px;
+            padding: 10px 15px;
+            overflow-x: auto;
+            background: rgba(0, 0, 0, 0.3);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .quick-reply-btn {
+            background: transparent;
+            border: 1px solid #00e5ff;
+            color: #00e5ff;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .quick-reply-btn:hover {
+            background: rgba(0, 229, 255, 0.2);
+        }
+
         .chat-send-btn {
             background: #00e5ff;
             color: #000;
@@ -744,8 +767,9 @@
 
                 <div class="chat-container">
                     <div class="chat-messages" id="chatbox">
-                        <div class="bot-msg">Hello! I am your REHAB-360 AI companion. How are you feeling today? Are you struggling with any cravings? (Type 'sugar', 'gaming', 'alcohol', or 'smoking' for specific recovery steps).</div>
+                        <div class="bot-msg" id="bot-welcome-msg">Hello! I am your REHAB-360 AI companion. How are you feeling today? Are you struggling with any cravings?</div>
                     </div>
+                    <div id="quick-replies" class="quick-replies-container"></div>
                     <div class="chat-input-area">
                         <input type="text" id="userInput" class="chat-input" placeholder="Type a message..." onkeypress="handleKey(event)">
                         <button class="chat-send-btn" onclick="sendMessage()">SEND</button>

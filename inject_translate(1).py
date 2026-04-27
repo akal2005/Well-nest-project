@@ -10,8 +10,10 @@ function googleTranslateElementInit() {
 }
 </script>
 <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-</body>"""
+</body>
+"""
 
+count = 0
 for filename in os.listdir(html_dir):
     if filename.endswith('.html'):
         filepath = os.path.join(html_dir, filename)
@@ -19,8 +21,19 @@ for filename in os.listdir(html_dir):
             content = f.read()
 
         if 'google_translate_element' not in content:
-            new_content = content.replace('</body>', widget_code)
-            with open(filepath, 'w', encoding='utf-8') as f:
-                f.write(new_content)
-            print(f'Injected widget into {filename}')
+            # We want to replace the LAST </body> occurrence. 
+            parts = content.rsplit('</body>', 1)
+            
+            if len(parts) == 2:
+                new_content = parts[0] + widget_code + parts[1]
+                with open(filepath, 'w', encoding='utf-8') as f:
+                    f.write(new_content)
+                count += 1
+                print(f'Injected widget into {filename}')
+            else:
+                # If no </body> was found, append it
+                with open(filepath, 'a', encoding='utf-8') as f:
+                    f.write(widget_code)
+                print(f'Appended widget into {filename}')
 
+print(f'Successfully updated {count} HTML files.')

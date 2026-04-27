@@ -66,6 +66,9 @@ function initDashboard() {
 
   // 8. Init Face Mood AI
   initFaceMoodAI();
+
+  // 9. Daily Check-In
+  checkDailyLogin();
 }
 
 // Global Trainer State
@@ -105,61 +108,76 @@ async function markAsRead(relId) {
   } catch (e) { console.error(e); }
 }
 
-function openChatModal() {
-  if (!currentRelationshipId) return;
+function openChatModal(relId, trainerName) {
+  if (!relId) return;
+  
+  // Update the global ID referenced by the SEND button
+  currentRelationshipId = relId; 
+  
+  // Update Modal Title dynamically based on who they clicked
+  const nameSpan = document.getElementById("chatTrainerName");
+  if (nameSpan && trainerName) nameSpan.textContent = trainerName;
+
   document.getElementById('chatModal').style.display = 'flex';
-  markAsRead(currentRelationshipId);
-  loadChatHistory(currentRelationshipId);
+  markAsRead(relId);
+  loadChatHistory(relId);
 }
 
 async function fetchTrainerInfo(userId) {
   try {
     const token = localStorage.getItem("token");
-    const response = await fetch(`/api/trainer-client/my-trainer/${userId}`, {
+    const response = await fetch(`/api/trainer-client/my-trainers/${userId}`, {
       headers: { "Authorization": "Bearer " + token }
     });
 
     if (response.ok) {
-      const data = await response.json();
-      // Data can be: { status: "NONE" } or { status: "PENDING", trainer: {...} } or { status: "ACTIVE", trainer: {...}, ...Object }
+      const data = await response.json(); // Now an array!
 
       const statusBadge = document.getElementById("trainerStatus");
       const trainerBox = document.getElementById("trainerBoxContent");
 
-      if (data.status === "ACTIVE") {
-        currentRelationshipId = data.id; // Store relationship ID for chat/plans
+      if (Array.isArray(data) && data.length > 0) {
+          trainerBox.innerHTML = ''; // clear default
+          statusBadge.textContent = `${data.length} COACHES`;
+          statusBadge.style.color = "#18b046";
+          statusBadge.style.borderColor = "#18b046";
+          statusBadge.style.border = "1px solid #18b046";
 
-        // Update Modal Title
-        const trainerNameSpan = document.getElementById("chatTrainerName");
-        if (trainerNameSpan && data.trainer) trainerNameSpan.textContent = data.trainer.name;
+          data.forEach(rel => {
+              if (rel.status === "ACTIVE") {
+                 currentRelationshipId = rel.id; // Store one as fallback for legacy polling
+                 trainerBox.innerHTML += `
+                     <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px;">
+                         <div style="display:flex; justify-content:space-between; align-items:center;">
+                             <p style="color:#ddd; margin:0; font-size:14px;"><strong>${rel.trainer.name}</strong></p>
+                             <span style="font-size:10px; background:#18b046; color:#fff; padding:2px 6px; border-radius:4px;">ACTIVE</span>
+                         </div>
+                         <button onclick="openChatModal(${rel.id}, '${rel.trainer.name.replace(/'/g, "\\'")}')" class="action-chip" style="background:rgba(24, 176, 70, 0.2); border: 1px solid #18b046; color:#18b046; padding:8px 16px; border-radius:99px; cursor:pointer; font-size:12px; font-weight:bold; transition: 0.3s; align-self: flex-start;">
+                             💬 Chat with ${rel.trainer.name}
+                         </button>
+                     </div>
+                 `;
+                 // Accumulate assigned plans from all active trainers into the UI
+                 loadAssignedPlans(rel.id);
+              } else if (rel.status === "PENDING") {
+                 trainerBox.innerHTML += `
+                     <div style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px dashed rgba(255,255,255,0.2);">
+                         <p style="color:#aaa; margin:0; font-size:14px;"><strong>${rel.trainer.name}</strong> <span style="color:orange; font-size:11px; float:right;">(Pending Request)</span></p>
+                     </div>
+                 `;
+              }
+          });
 
-        statusBadge.textContent = "ACTIVE";
-        statusBadge.style.color = "#18b046";
-        statusBadge.style.borderColor = "#18b046";
-        statusBadge.style.border = "1px solid #18b046";
-
-        // Show Chat Button
-        trainerBox.innerHTML = `
-             <p style="color:#ddd; margin-bottom:10px;">Trainer: <strong>${data.trainer.name}</strong></p>
-             <button id="user-chat-btn" onclick="openChatModal()" class="action-chip" style="background:#18b046; color:white; border:none; padding:12px 24px; border-radius:99px; cursor:pointer; font-size:13px;">
-                 Chat with Coach
-                 <span id="user-chat-badge" class="notification-badge" style="display:none">0</span>
-             </button>
-        `;
-
-        // Initialize Plans (Chat loaded on click)
-        loadAssignedPlans(currentRelationshipId);
-
-      } else if (data.status === "PENDING") {
-        statusBadge.textContent = "PENDING";
-        statusBadge.style.color = "orange";
-        trainerBox.innerHTML = `
-                    <p style="color:#ddd; margin-bottom:10px;">Request sent to <strong>${data.trainer.name}</strong>.</p>
-                    <p style="font-size:12px; color:#aaa;">Waiting for acceptance...</p>
-                `;
+          // Allow stacking up to 4 trainers
+          if (data.length < 4) {
+              trainerBox.innerHTML += `<a href="trainers.html" class="action-btn" style="margin-top:10px; padding: 8px; font-size: 12px; display:inline-block; border-radius: 6px;">+ Find Another Coach</a>`;
+          }
       } else {
         statusBadge.textContent = "Not Selected";
-        // Default content already in HTML
+        trainerBox.innerHTML = `
+            <p style="color:#aaa; font-size:14px; margin-bottom: 10px;">You haven't selected a trainer yet.</p>
+            <a href="trainers.html" class="action-btn" style="display:inline-block;">Find a Trainer</a>
+        `;
       }
     }
   } catch (e) {
@@ -401,6 +419,51 @@ function updateDashboardVisuals(stats) {
   initCharts(stats);
   updateProgressBars(stats);
   updateWaterSleepUI(stats);
+  updateGamificationScore(stats);
+}
+
+function updateGamificationScore(stats) {
+    let score = 0;
+    
+    // 1. Calories Burned today points (max 300)
+    let todayBurn = stats.calories || 0;
+    score += Math.min(todayBurn * 0.5, 300);
+    
+    // 2. Water intake base (max 200) - Assuming goal 3.7L
+    let waterLiters = stats.water || 0;
+    score += Math.min((waterLiters / 3.7) * 200, 200);
+    
+    // 3. Weekly consistency (max 500)
+    let activeDays = 0;
+    const burned = stats.chartData?.caloriesBurned || [];
+    burned.forEach(val => { if(val > 0) activeDays++; });
+    score += Math.min((activeDays / 7) * 500, 500);
+
+    score = Math.round(score);
+
+    // Update Text
+    updateText("healthScoreNum", score);
+    
+    // Update SVG Circle
+    const scoreFill = document.getElementById('scoreFill');
+    if (scoreFill) {
+        scoreFill.style.transition = 'stroke-dashoffset 1.5s ease-out';
+        const val = Math.max(0, Math.min(score, 1000));
+        const percentage = val / 1000;
+        const dashoffset = 283 - (283 * percentage); // 283 is the stroke-dasharray
+        scoreFill.style.strokeDashoffset = dashoffset;
+    }
+    
+    // Update Message
+    const msg = document.getElementById('scoreMessage');
+    if (msg) {
+        if (score > 800) msg.textContent = "Incredible! You are on fire! 🔥";
+        else if (score > 500) msg.textContent = "Great job! Keep the momentum going! 💪";
+        else msg.textContent = "Complete daily logs to boost your score!";
+    }
+    
+    // Update Fire Streak Header
+    updateText("streakCount", activeDays);
 }
 
 // Helper to update text safely
@@ -895,3 +958,42 @@ async function handleFaceScan() {
     alert("Please grant camera access to use the Face Mood AI feature!");
   }
 }
+
+// --- Daily Check-In Logic ---
+function checkDailyLogin() {
+  const today = new Date().toDateString();
+  const lastCheckIn = localStorage.getItem("lastCheckInDate");
+  if (lastCheckIn !== today) {
+    const modal = document.getElementById("dailyCheckInModal");
+    if (modal) modal.style.display = "flex";
+  }
+}
+
+function logDailyCheckIn(status) {
+    const today = new Date().toDateString();
+    localStorage.setItem("lastCheckInDate", today);
+    localStorage.setItem("todayRecoveryStatus", status); 
+    
+    // Hide modal smoothly
+    const modal = document.getElementById("dailyCheckInModal");
+    if (modal) {
+        modal.style.transition = "opacity 0.3s ease";
+        modal.style.opacity = "0";
+        setTimeout(() => { modal.style.display = "none"; modal.style.opacity = "1"; }, 300);
+    }
+    
+    // Toast Notification
+    const toast = document.createElement("div");
+    toast.textContent = "Daily Check-in Logged! 🔥";
+    toast.style.cssText = "position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:#18b046; color:#000; padding:12px 24px; border-radius:50px; font-weight:bold; z-index:10000; box-shadow:0 0 20px rgba(24, 176, 70, 0.6); opacity:0; transition:opacity 0.3s ease;";
+    document.body.appendChild(toast);
+    
+    setTimeout(() => toast.style.opacity = "1", 100);
+    setTimeout(() => {
+        toast.style.opacity = "0";
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Make accessible to onclick
+window.logDailyCheckIn = logDailyCheckIn;

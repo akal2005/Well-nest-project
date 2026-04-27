@@ -45,15 +45,25 @@ public class TrainerClientController {
         User user = userOpt.get();
         Trainer trainer = trainerOpt.get();
 
-        // Check if user already has an active or pending request
+        // Check if user already has an active or pending request with THIS SPECIFIC trainer
         List<TrainerClient> existingList = trainerClientRepo.findByUser(user);
+        
+        int activeOrPendingCount = 0;
         for (TrainerClient tc : existingList) {
             String status = tc.getStatus();
             if ("Data Seeder".equals(status)) {
                 // Ignore
             } else if ("ACTIVE".equals(status) || "PENDING".equals(status)) {
-                return ResponseEntity.status(409).body("You already have a trainer request in " + status + " status.");
+                activeOrPendingCount++;
+                if (tc.getTrainer().getId().equals(trainerId)) {
+                    return ResponseEntity.status(409).body("You already have a trainer request in " + status + " status with this exact trainer.");
+                }
             }
+        }
+
+        // Enforce the new 4-trainer network limit
+        if (activeOrPendingCount >= 4) {
+             return ResponseEntity.status(409).body("You have reached the maximum limit of 4 active/pending trainers.");
         }
 
         TrainerClient request = new TrainerClient();
@@ -130,21 +140,41 @@ public class TrainerClientController {
         return ResponseEntity.ok("Request updated to " + tc.getStatus());
     }
 
-    // 5. Get My Trainer (User Action)
+    // 5. Get My Trainers (User Action) - MULTI-TRAINER UPGRADE
+    @GetMapping("/my-trainers/{userId}")
+    public ResponseEntity<?> getMyTrainers(@PathVariable Long userId) {
+        Optional<User> u = userRepo.findById(userId);
+        if (u.isEmpty())
+            return ResponseEntity.notFound().build();
+
+        // Fetch all relationships for this user
+        List<TrainerClient> userRelationships = trainerClientRepo.findByUser(u.get());
+        
+        // Filter out only active or pending trainers
+        List<TrainerClient> activeOrPending = userRelationships.stream()
+                .filter(tc -> "ACTIVE".equals(tc.getStatus()) || "PENDING".equals(tc.getStatus()))
+                .toList();
+                
+        return ResponseEntity.ok(activeOrPending);
+    }
+
+    // Retained for legacy fallback during transition
     @GetMapping("/my-trainer/{userId}")
     public ResponseEntity<?> getMyTrainer(@PathVariable Long userId) {
         Optional<User> u = userRepo.findById(userId);
         if (u.isEmpty())
             return ResponseEntity.notFound().build();
 
-        Optional<TrainerClient> tc = trainerClientRepo.findByUserAndStatus(u.get(), "ACTIVE");
-        if (tc.isPresent()) {
-            return ResponseEntity.ok(tc.get());
+        List<TrainerClient> active = trainerClientRepo.findByUser(u.get()).stream()
+            .filter(tc -> "ACTIVE".equals(tc.getStatus())).toList();
+            
+        if (!active.isEmpty()) {
+            return ResponseEntity.ok(active.get(0));
         } else {
-            // Check pending as well?
-            Optional<TrainerClient> pending = trainerClientRepo.findByUserAndStatus(u.get(), "PENDING");
-            if (pending.isPresent()) {
-                return ResponseEntity.ok(Map.of("status", "PENDING", "trainer", pending.get().getTrainer()));
+            List<TrainerClient> pending = trainerClientRepo.findByUser(u.get()).stream()
+            .filter(tc -> "PENDING".equals(tc.getStatus())).toList();
+            if (!pending.isEmpty()) {
+                return ResponseEntity.ok(Map.of("status", "PENDING", "trainer", pending.get(0).getTrainer()));
             }
             return ResponseEntity.ok(Map.of("status", "NONE"));
         }
